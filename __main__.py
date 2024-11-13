@@ -236,7 +236,7 @@ async def create_survey(request):
         data = request.json()
         is_valid_format = await is_valid_format_survey(data)
         if not is_valid_format :
-            logger.warning("feilds are missing")
+            logger.warning("fields are missing")
             return {"error":"fields are missing"}
 
         if isinstance(data.get('nodes'), str):
@@ -254,7 +254,7 @@ async def create_survey(request):
         is_validated = await validate_data_survey(data)
 
         if not is_validated:
-            logger.warning("data is not in correct format or feilds are missing")
+            logger.warning("data is not in correct format or fields are missing")
             return {"error":"data is not in correct format or some fields are missing"}
 
         with SessionLocal() as session:
