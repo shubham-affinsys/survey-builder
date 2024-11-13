@@ -78,7 +78,7 @@ class UserResponse(Base, Helper):
     time_taken = Column(Integer, nullable=True)
     no_of_questions_asked = Column(Integer, nullable=True)
     no_of_questions_answered = Column(Integer, nullable=True)
-    tennat = Column()
+    tenant = Column(String,nullable=False)
 
     survey = relationship('Survey', back_populates='responses')
     user = relationship('User', back_populates='responses')
@@ -98,5 +98,5 @@ class Answer(Base, Helper):
     question = relationship('Question', back_populates='answers')
     response = relationship('UserResponse', back_populates='answers')
 
-# Base.metadata.drop_all(bind=engine)
+Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)

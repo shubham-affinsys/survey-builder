@@ -64,7 +64,8 @@ async def create_response(request):
                 response_sentiment=data.get('response_sentiment',None),
                 time_taken=data.get('time_taken',0),
                 no_of_questions_asked=data.get('questions_asked'),
-                no_of_questions_answered=data.get('questions_answered')
+                no_of_questions_answered=data.get('questions_answered'),
+                tenant = data.get('tenat')
             )
 
             session.add(response)
