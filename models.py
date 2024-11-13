@@ -98,5 +98,5 @@ class Answer(Base, Helper):
     question = relationship('Question', back_populates='answers')
     response = relationship('UserResponse', back_populates='answers')
 
-Base.metadata.drop_all(bind=engine)
+# Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
