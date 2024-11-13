@@ -78,6 +78,7 @@ class UserResponse(Base, Helper):
     time_taken = Column(Integer, nullable=True)
     no_of_questions_asked = Column(Integer, nullable=True)
     no_of_questions_answered = Column(Integer, nullable=True)
+    tennat = Column()
 
     survey = relationship('Survey', back_populates='responses')
     user = relationship('User', back_populates='responses')
