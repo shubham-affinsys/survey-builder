@@ -1,0 +1,111 @@
+{
+    "survey_title":"Customer Feedback Survey",
+    "survey_id":"daaa6de1-b965-4f96-b658-e4ed42abc265",
+    "description":"A survey to collect feedback on customer satisfaction.",
+    "total_questions":10,
+    "nodes":{
+        "node_111":{
+            "id":"node_111",
+            "type":"start",
+            "name":"start",
+            "width":90,
+            "height":40,
+            "position":{
+                "x":12,
+                "y":50
+            },
+            "previous":[],
+            "next":["node_222"]
+        },
+        "node_222":{
+            "id":"node_222",
+            "type":"question",
+            "name":"question_111",
+            "width":90,
+            "height":40,
+            "position":{
+                "x":52,
+                "y":100
+            },
+            "previous":["node_111"],
+            "next":["node_333","node_444","node_555","node_666"],
+            "metadata":{
+                "question_id":"question_111"
+            }
+        }
+    },
+    "questions":{
+       "question_001":{
+          "type":"mcq",
+          "text":"How satisfied are you with our service?",
+          "description":"https://image.url.com/",
+          "is_required":"true",
+          "sentiment":"no_sentiment",
+          "data":{
+             "options":[
+                {
+                   "value":"Very Satisfied",
+                   "sentiment":"positive"
+                },
+                {
+                   "value":"Satisfied",
+                   "sentiment":"positive"
+                },
+                {
+                   "value":"Not Satisfied",
+                   "sentiment":"negative"
+                },
+                {
+                   "value":"Neutral",
+                   "sentiment":"neutral"
+                }
+             ]
+          },
+          "depends_on":[
+             
+          ],
+          "next":{
+             "positive":"question_001",
+             "negative":"question_002",
+             "neutral":"question_003",
+             "no_sentiment":"question123"
+          }
+       },
+       "question_003":{
+          "type":"text_feild",
+          "text":"How was your expirence with our insurance ploicy?",
+          "description":"https://terms.and.conditiions.com/",
+          "is_required":"true",
+          "sentiment":"negative",
+          "data":{
+             "input":{
+                "value":"placeholder value",
+                "sentiment":"no_sentiment"
+             }
+          },
+          "depends_on":[
+             {
+                "question_id":"question123",
+                "sentiment":"negative"
+             },
+             {
+                "question_id":"question123",
+                "sentiment":"ANY"
+             }
+          ],
+          "next":{
+             "positive":"",
+             "negative":"",
+             "neutral":"",
+             "no_sentiment":"question123"
+          }
+       }
+    },
+    "created_at":"2024-11-05T10:30:00Z",
+    "tenant":"tenant123",
+    "created_by":"shubham_dev1",
+    "theme_data":{
+       "logo":"https://example.com/logo.png",
+       "colors":"#3498db"
+    }
+}

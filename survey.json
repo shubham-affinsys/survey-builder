@@ -1,0 +1,13 @@
+{
+   "survey_title":"Customer Feedback Survey",
+   "survey_id":"survey789",
+   "description":"A survey to collect feedback on customer satisfaction.",
+   "total_questions":10,
+   "nodes":{},
+   "questions":{},
+   "created_at":"",
+   "tenant":"tenant123",
+   "channel_id":"1234567890",
+   "created_by":"",
+   "theme_data":{}
+}
