@@ -3,7 +3,7 @@ import models
 from models import *
 from log import logger
 import json
-from utils import *
+from utils import generate_uuid,is_valid_uuid,is_valid_format_survey,validate_data_survey
 
 app = Robyn(__file__)
 
@@ -43,6 +43,14 @@ async def create_response(request):
         data = request.json()
         with SessionLocal() as session:
 
+            if not is_valid_uuid(data.get('user_id')):
+                logger.error("Invalid user_id  format. Expected a valid UUID.")
+                return Response(status_code=400,headers={"Content-Type":"application/json"},description=b'{"error":"invalid format for user_id expecting a uuid"}')
+            if not is_valid_uuid(data.get('survey_id')):
+                logger.error("Invalid survey_id format. Expected a valid UUID.")
+                return Response(status_code=400,headers={"Content-Type":"application/json"},description=b'{"error":"invalid format for survey_id expecting a uuid"}')
+           
+
             # check if surevy id  is valid
             survey = session.query(Survey).filter(Survey.survey_id==data.get('survey_id')).first()
             if not survey:
@@ -65,7 +73,7 @@ async def create_response(request):
                 time_taken=data.get('time_taken',0),
                 no_of_questions_asked=data.get('questions_asked'),
                 no_of_questions_answered=data.get('questions_answered'),
-                tenant = data.get('tenat')
+                tenant = data.get('tenant')
             )
 
             session.add(response)
@@ -135,7 +143,7 @@ async def get_all_response():
             logger.debug("All responses fetched from DB")
             return {"data": responses}
     except Exception as e:
-        logger.error("Error occured while fetching all UserResponses")
+        logger.error(f"Error occured while fetching all UserResponses {e}")
         return Response(status_code=500,headers={"Content-Type":"application/json"},description=b'{"error":"cannot fetch user responses"}')
 
 
@@ -170,11 +178,13 @@ async def get_all_surveys():
     try:
         with SessionLocal() as session:
             surveys = session.query(Survey).all()
+
             surveys = [await survey.as_dict() for survey in surveys]
+            
             logger.debug("all surveys fetched from DB")
             return {"data": surveys}
     except Exception as e:
-        logger.error("Error occured while fetching all surveys")
+        logger.error(f"Error occured while fetching all surveys {e}")
         return Response(status_code=500,headers={"Content-Type":"application/json"},description=b'{"error":"cannot fetch surveys"}')
 
 
@@ -216,7 +226,8 @@ async def delete_survey(request):
             return Response(status_code=400,headers={"Content-Type":"application/json"},description=b'{"error":"invalid format expecting a uuid"}')
             
         with SessionLocal() as session:
-            survey = session.query(Survey).filter(Survey.survey_id==id).first()
+            result = session.query(Survey).filter(Survey.survey_id==id).first()
+            survey=result.scalar_one_or_none()
             if not survey:
                 logger.warning(f"survey does not exist with survey_id {id}")
                 return Response(status_code=404,headers={"Content-Type":"application/json"},description=b'{"error":"survey does not exists"}')
@@ -285,12 +296,23 @@ async def create_survey(request):
         return Response(status_code=500,headers={"Content-Type":"application/json"},description=b'{"error":"cannot create survey"}')
 
 
+from datetime import datetime,timezone
+current_time = datetime.now(timezone.utc)
+
+# Convert to naive datetime (remove timezone)
+naive_time = current_time.replace(tzinfo=None)
+
+
+
 @app.post("/create-user")
 async def create_user(request):
     try:
         data = request.json()
         with SessionLocal() as session:
             # Check if user already exists
+            # result = await session.execute(select(User).filter(User.username == data.get('username')))
+            # existing_user = result.scalar_one_or_none()
+
             existing_user = session.query(User).filter(User.username == data.get('username')).first()
             if existing_user:
                 logger.warning("username already exists")
@@ -300,7 +322,8 @@ async def create_user(request):
             user = User(
                 username=data.get('username', 'unknown'),
                 mobile_no=data.get('mobile_no', None),
-                email=data.get('email', None)
+                email=data.get('email', None),
+                created_at=naive_time
             )
             session.add(user)
             session.commit()
@@ -315,8 +338,10 @@ async def create_user(request):
         return Response(status_code=500,headers=Headers({"Content-Type":"application/json"}),description=b'{"error":"Internal Server Error"}')
 
 
-    
+from sqlalchemy.future import select
 
+
+# SYNC
 # create a route to fetch all users
 @app.get("/users")
 async def get_users():
@@ -326,11 +351,39 @@ async def get_users():
         logger.debug("all users fetched from db")
         return {"users": users}
 
+# ASYNC
+# @app.get("/users")
+# async def get_users():
+#     async with SessionLocal() as session:
+#     # async_session = next(engine_cycle)
+#     # async with async_session() as session:
+#         result = await session.execute(select(User))
+#         users = result.scalars().all()  # Collect all user objects
+
+#         # Convert each user to a dictionary, with UUID fields as strings if needed
+#         users = [
+#             {
+#                 **await user.as_dict(),
+#                 "user_id": str(user.user_id)
+#             }
+#             for user in users
+#         ]
+
+#         logger.debug("All users fetched from db")
+#         return {"users": users}
+
+
 
 @app.get("/")
-def index():
+async def index():
     return "Hello World!"
 
 
 if __name__ == "__main__":
-    app.start(host="0.0.0.0", port=8080)
+    # app.startup_handler(connect_db)
+    # app.startup_handler(connect_db)
+    # app.shutdown_handler(shutdown_db)
+    
+    app.start(port=8080)
+
+
