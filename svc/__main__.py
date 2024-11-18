@@ -3,7 +3,11 @@ import models
 from models import *
 from log import logger
 import json
-from utils import generate_uuid,is_valid_uuid,is_valid_format_survey,validate_data_survey
+from utils import generate_uuid, fetch_all_answers, fetch_survey,format_survey_data
+
+from validator import validate_user_response,is_valid_uuid, is_valid_format_survey, validate_data_survey
+
+
 
 app = Robyn(__file__)
 
@@ -18,41 +22,53 @@ app = Robyn(__file__)
 #     return response
 
 
-
 # ANSWERS
 
 @app.get("/answers")
-async def get_all_answers():
+async def get_all_answers(request):
+    tenant = request.query_params.get('tenant',None)
+    user_id = request.query_params.get('user_id',None)
+    survey_id = request.query_params.get('survey_id',None)
+    sentiment = request.query_params.get('sentiment',None)
+    question_id = request.query_params.get('question_id',None)
+    
+
     try:
         with SessionLocal() as session:
-            answers = session.query(Answer).all()
-            answers = [await answer.as_dict() for answer in answers]
-            return {"data":answers}
+            answers = await fetch_all_answers(
+                                            session=session,
+                                            tenant = tenant,
+                                            survey_id=survey_id,
+                                            user_id=user_id,
+                                            sentiment=sentiment,
+                                            question_id=question_id
+                                        )
+
+        if answers is None:
+            logger.warning("no Answer found")
+            return {"data":"Not Found"}
+            
+        logger.info("Data fetched by DB success")
+        return {"data":answers}
+            
     except Exception as e:
         logger.error(f"error while fetching all answers {e}")
         return{"error":"cannot fetch all answers"}
 
 
-
-# RESPONSE
-
-
+# User-RESPONSE
 @app.post("/user-response")
 async def create_response(request):
     try:
         data = request.json()
+
+        is_validated = await validate_user_response(data)
+        if not is_validated :
+            return Response(status_code=400,headers={"Content-Type":"application/json"},description=b'{"error":"invalid format expecting a uuid"}')
+        
         with SessionLocal() as session:
+            survey = await fetch_survey(session=session,survey_id=data.get('survey_id'))
 
-            if not is_valid_uuid(data.get('user_id')):
-                logger.error("Invalid user_id  format. Expected a valid UUID.")
-                return Response(status_code=400,headers={"Content-Type":"application/json"},description=b'{"error":"invalid format for user_id expecting a uuid"}')
-            if not is_valid_uuid(data.get('survey_id')):
-                logger.error("Invalid survey_id format. Expected a valid UUID.")
-                return Response(status_code=400,headers={"Content-Type":"application/json"},description=b'{"error":"invalid format for survey_id expecting a uuid"}')
-           
-
-            # check if surevy id  is valid
-            survey = session.query(Survey).filter(Survey.survey_id==data.get('survey_id')).first()
             if not survey:
                 logger.error("error survey_id does not esist in DB")
                 return {"error":"survey_id is invalid"}
@@ -124,14 +140,11 @@ async def create_response(request):
             session.add_all(answers)
             session.commit()
 
-
-
             logger.info(f"user response {response_id} saved ")
             return {"data": f"user response {response_id} saved"}
     except Exception as e:
         logger.error(f"Error occured while saving UserResponse {e}")
         return Response(status_code=500,headers={"Content-Type":"application/json"},description=b'{"error":"cannot save user responses"}')
-
 
 
 @app.get("/user-responses")
@@ -220,9 +233,8 @@ async def delete_survey(request):
             logger.warning("survey_id was not given")
             return Response(status_code=400,headers={"Content-Type":"application/json"},description=b'{"error":"survey_id is not provided"}')
 
-
         if not is_valid_uuid(id):
-            logger.error("Invalid survey ID format. Expected a valid UUID.")
+            logger.error("Invalid survey ID format. Expected valid UUID.")
             return Response(status_code=400,headers={"Content-Type":"application/json"},description=b'{"error":"invalid format expecting a uuid"}')
             
         with SessionLocal() as session:
@@ -250,25 +262,9 @@ async def create_survey(request):
         if not is_valid_format :
             logger.warning("fields are missing")
             return {"error":"fields are missing"}
-
-        if isinstance(data.get('nodes'), str):
-            data['nodes'] = json.loads(data['nodes'])
-
-        if isinstance(data.get('questions'), str):
-            data['questions'] = json.loads(data['questions'])
-
-        if isinstance(data.get('theme_data'), str):
-            data['theme_data'] = json.loads(data['theme_data'])
-
-        if isinstance(data.get('total_questions'), str):
-            data['total_questions'] = int(data['total_questions'])
-
-        is_validated = await validate_data_survey(data)
-
-        if not is_validated:
-            logger.warning("data is not in correct format or fields are missing")
-            return {"error":"data is not in correct format or some fields are missing"}
-
+        
+        data = await format_survey_data(data)
+        
         with SessionLocal() as session:
             existing_survey = session.query(Survey).filter(Survey.title == data['survey_title']).first()
             if existing_survey:
@@ -309,6 +305,7 @@ async def create_user(request):
     try:
         data = request.json()
         with SessionLocal() as session:
+
             # Check if user already exists
             # result = await session.execute(select(User).filter(User.username == data.get('username')))
             # existing_user = result.scalar_one_or_none()

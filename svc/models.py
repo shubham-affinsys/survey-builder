@@ -5,7 +5,6 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import relationship, sessionmaker, declarative_base
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import create_engine, Column, String, DateTime, JSON, Integer, ForeignKey, Boolean
-from utils import generate_uuid
 import sys
 from log import logger
 
@@ -23,6 +22,9 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine,async_sessi
 class Helper:
     async def as_dict(self):
         return {column.name: getattr(self, column.name) for column in self.__table__.columns}
+
+def generate_uuid():
+    return str(uuid.uuid4())
 
 
 
@@ -103,7 +105,7 @@ class Answer(Base, Helper):
 
 
 
-DB_URL = f"postgresql+psycopg2://{getenv('POSTGRES_USER')}:{getenv('POSTGRES_PASSWORD')}@{getenv('POSTGRES_HOST')}:{getenv('POSTGRES_PORT')}/{getenv('POSTGRES_DB')}?sslmode=require"
+DB_URL = f"postgresql+psycopg2://{getenv('POSTGRES_USER')}:{getenv('POSTGRES_PASSWORD')}@{getenv('POSTGRES_HOST')}:{getenv('POSTGRES_PORT')}/{getenv('POSTGRES_DB')}"
 
 try:
     logger.info("creating engine...")
