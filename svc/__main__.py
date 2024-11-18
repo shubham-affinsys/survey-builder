@@ -345,11 +345,15 @@ from sqlalchemy.future import select
 # create a route to fetch all users
 @app.get("/users")
 async def get_users():
-    with SessionLocal() as session:
-        users = session.query(User).all()
-        users = [await user.as_dict() for user in users]
+    try:
+        with SessionLocal() as session:
+            users = session.query(User).all()
+            users = [await user.as_dict() for user in users]
         logger.debug("all users fetched from db")
         return {"users": users}
+    except Exception as e:
+        logger.error(f"error while fetching all users : {e}")
+        return Response(status_code=500,headers=Headers({"Content-Type":"application/json"}),description=b'{"error":"Internal Server Error"}')
 
 # ASYNC
 # @app.get("/users")
@@ -384,6 +388,6 @@ if __name__ == "__main__":
     # app.startup_handler(connect_db)
     # app.shutdown_handler(shutdown_db)
     
-    app.start(port=8080)
+    app.start(host="0.0.0.0",port=8080)
 
 

@@ -21,7 +21,7 @@
     COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
     
     # Expose the port used by the application
-    EXPOSE 8088
+    EXPOSE 8080
     
     # Start Supervisor to manage the Python app
     # ENTRYPOINT ["python3", "-m", "svc"]
@@ -33,7 +33,7 @@
     ENV FAST_MODE="false"
 
 # Use conditional statement for --fast
-    ENTRYPOINT ["sh", "-c", "python3 -m svc --processes $PROCESSES --workers $WORKERS $( [ \"$FAST_MODE\" = \"true\" ] && echo \"--fast\" )"]
+ENTRYPOINT ["sh", "-c", "python3 -m svc --processes $PROCESSES --workers $WORKERS $( [ \"$FAST_MODE\" = \"true\" ] && echo \"--fast\" ) --log-level $LOG_LEVEL"]
 
 
 

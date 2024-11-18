@@ -7,6 +7,8 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import create_engine, Column, String, DateTime, JSON, Integer, ForeignKey, Boolean
 from utils import generate_uuid
 import sys
+from log import logger
+
 from sqlalchemy.future import select
 import asyncio
 load_dotenv()
@@ -104,17 +106,17 @@ class Answer(Base, Helper):
 DB_URL = f"postgresql+psycopg2://{getenv('POSTGRES_USER')}:{getenv('POSTGRES_PASSWORD')}@{getenv('POSTGRES_HOST')}:{getenv('POSTGRES_PORT')}/{getenv('POSTGRES_DB')}"
 
 try:
-    print("creating engine...")
+    logger.info("creating engine...")
     engine = create_engine(DB_URL, pool_size=20, max_overflow=10)
-    print(engine)
+    logger.info(f"engine: {engine}")
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     # Base.metadata.drop_all(bind=engine)
-    print("engine created!!!")
+    logger.info("engine created!!!")
     Base.metadata.create_all(bind=engine)
-    print("Tables created!!!")
+    logger.info("Tables created!!!")
 
 except Exception as e:
-    print(f"error cannot connect to DB {e}")
+    logger.error(f"error cannot connect to DB {e}")
 
 
 # DB_URL = f"postgresql+asyncpg://{getenv('POSTGRES_USER')}:{getenv('POSTGRES_PASSWORD')}@{getenv('POSTGRES_HOST')}:{getenv('POSTGRES_PORT')}/{getenv('POSTGRES_DB')}"
