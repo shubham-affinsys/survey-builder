@@ -1,141 +1,141 @@
-import asyncio
-import time
-from itertools import cycle
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine
-from sqlalchemy.orm import scoped_session
-from sqlalchemy.future import select
-from models import User  # Assuming your User model is defined here
-from os import getenv
+# import asyncio
+# import time
+# from itertools import cycle
+# from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+# from sqlalchemy.orm import sessionmaker
+# from sqlalchemy import create_engine
+# from sqlalchemy.orm import scoped_session
+# from sqlalchemy.future import select
+# from models import User  # Assuming your User model is defined here
+# from os import getenv
 
-# Database URLs
-DB_URL_ASYNC = f"postgresql+asyncpg://{getenv('POSTGRES_USER')}:{getenv('POSTGRES_PASSWORD')}@{getenv('POSTGRES_HOST')}:5433/{getenv('POSTGRES_DB')}"
-DB_URL_SYNC = f"postgresql+psycopg2://{getenv('POSTGRES_USER')}:{getenv('POSTGRES_PASSWORD')}@{getenv('POSTGRES_HOST')}:5433/{getenv('POSTGRES_DB')}"
+# # Database URLs
+# DB_URL_ASYNC = f"postgresql+asyncpg://{getenv('POSTGRES_USER')}:{getenv('POSTGRES_PASSWORD')}@{getenv('POSTGRES_HOST')}:5433/{getenv('POSTGRES_DB')}"
+# DB_URL_SYNC = f"postgresql+psycopg2://{getenv('POSTGRES_USER')}:{getenv('POSTGRES_PASSWORD')}@{getenv('POSTGRES_HOST')}:5433/{getenv('POSTGRES_DB')}"
 
-# Async Engine and Session
-async_engine = create_async_engine(DB_URL_ASYNC, pool_size=20, max_overflow=10, future=True)
-AsyncSessionLocal = sessionmaker(async_engine, expire_on_commit=False, class_=AsyncSession)
+# # Async Engine and Session
+# async_engine = create_async_engine(DB_URL_ASYNC, pool_size=20, max_overflow=10, future=True)
+# AsyncSessionLocal = sessionmaker(async_engine, expire_on_commit=False, class_=AsyncSession)
 
-# Sync Engine and Session
-sync_engine = create_engine(DB_URL_SYNC, pool_size=20, max_overflow=10, future=True)
-SyncSessionLocal = scoped_session(sessionmaker(bind=sync_engine))
+# # Sync Engine and Session
+# sync_engine = create_engine(DB_URL_SYNC, pool_size=20, max_overflow=10, future=True)
+# SyncSessionLocal = scoped_session(sessionmaker(bind=sync_engine))
 
-# Measure sync function for DB
-def fetch_from_db_sync(req_id, worker_id, latencies):
-    """Sync function to fetch data from DB."""
-    start_time = time.time()
-    try:
-        with SyncSessionLocal() as db_session:
-            result = db_session.execute(select(User))
-            users = result.scalars().all()
-            latencies.append(time.time() - start_time)  # Record latency for this request
-            return users
-    except Exception as e:
-        latencies.append(time.time() - start_time)  # Error latency
-        print(f"Worker {worker_id} - Request {req_id} - Error (sync): {e}")
-        return []
+# # Measure sync function for DB
+# def fetch_from_db_sync(req_id, worker_id, latencies):
+#     """Sync function to fetch data from DB."""
+#     start_time = time.time()
+#     try:
+#         with SyncSessionLocal() as db_session:
+#             result = db_session.execute(select(User))
+#             users = result.scalars().all()
+#             latencies.append(time.time() - start_time)  # Record latency for this request
+#             return users
+#     except Exception as e:
+#         latencies.append(time.time() - start_time)  # Error latency
+#         print(f"Worker {worker_id} - Request {req_id} - Error (sync): {e}")
+#         return []
 
-# Measure async function for DB
-async def fetch_from_db_async(req_id, worker_id, latencies):
-    """Async function to fetch data from DB."""
-    start_time = time.time()
-    try:
-        async with AsyncSessionLocal() as db_session:
-            result = await db_session.execute(select(User))
-            users = result.scalars().all()
-            latencies.append(time.time() - start_time)  # Record latency for this request
-            return users
-    except Exception as e:
-        latencies.append(time.time() - start_time)  # Error latency
-        print(f"Worker {worker_id} - Request {req_id} - Error (async): {e}")
-        return []
+# # Measure async function for DB
+# async def fetch_from_db_async(req_id, worker_id, latencies):
+#     """Async function to fetch data from DB."""
+#     start_time = time.time()
+#     try:
+#         async with AsyncSessionLocal() as db_session:
+#             result = await db_session.execute(select(User))
+#             users = result.scalars().all()
+#             latencies.append(time.time() - start_time)  # Record latency for this request
+#             return users
+#     except Exception as e:
+#         latencies.append(time.time() - start_time)  # Error latency
+#         print(f"Worker {worker_id} - Request {req_id} - Error (async): {e}")
+#         return []
 
-# Sync worker function (parallely running workers)
-async def worker_sync(num_requests, worker_id, latencies):
-    """Sync worker that makes a series of sync requests to the database."""
-    print(f"Sync Worker {worker_id} started.")
-    worker_start = time.time()
+# # Sync worker function (parallely running workers)
+# async def worker_sync(num_requests, worker_id, latencies):
+#     """Sync worker that makes a series of sync requests to the database."""
+#     print(f"Sync Worker {worker_id} started.")
+#     worker_start = time.time()
 
-    for req_id in range(num_requests):
-        fetch_from_db_sync(req_id, worker_id, latencies)
+#     for req_id in range(num_requests):
+#         fetch_from_db_sync(req_id, worker_id, latencies)
 
-    worker_end = time.time()
-    return worker_end - worker_start  # Return the total time for the worker
+#     worker_end = time.time()
+#     return worker_end - worker_start  # Return the total time for the worker
 
-# Async worker function
-async def worker_async(num_requests, worker_id, latencies):
-    """Async worker that makes a series of async requests to the database."""
-    print(f"Async Worker {worker_id} started.")
-    worker_start = time.time()
+# # Async worker function
+# async def worker_async(num_requests, worker_id, latencies):
+#     """Async worker that makes a series of async requests to the database."""
+#     print(f"Async Worker {worker_id} started.")
+#     worker_start = time.time()
 
-    tasks = [fetch_from_db_async(req_id, worker_id, latencies) for req_id in range(num_requests)]
-    await asyncio.gather(*tasks, return_exceptions=True)
+#     tasks = [fetch_from_db_async(req_id, worker_id, latencies) for req_id in range(num_requests)]
+#     await asyncio.gather(*tasks, return_exceptions=True)
 
-    worker_end = time.time()
-    return worker_end - worker_start  # Return the total time for the worker
+#     worker_end = time.time()
+#     return worker_end - worker_start  # Return the total time for the worker
 
-# Main function to compare sync vs async performance
-async def compare_sync_async(num_requests, num_workers):
-    sync_latencies = []
-    async_latencies = []
+# # Main function to compare sync vs async performance
+# async def compare_sync_async(num_requests, num_workers):
+#     sync_latencies = []
+#     async_latencies = []
 
-    # Sync workers execution (spawned in parallel)
-    print("=== Sync Workers ===")
-    sync_start = time.time()
+#     # Sync workers execution (spawned in parallel)
+#     print("=== Sync Workers ===")
+#     sync_start = time.time()
 
-    sync_worker_tasks = [
-        asyncio.create_task(worker_sync(num_requests, worker_id=i+1, latencies=sync_latencies))
-        for i in range(num_workers)
-    ]
-    sync_times = await asyncio.gather(*sync_worker_tasks)
+#     sync_worker_tasks = [
+#         asyncio.create_task(worker_sync(num_requests, worker_id=i+1, latencies=sync_latencies))
+#         for i in range(num_workers)
+#     ]
+#     sync_times = await asyncio.gather(*sync_worker_tasks)
 
-    sync_end = time.time()
+#     sync_end = time.time()
 
-    # Async workers execution
-    print("\n=== Async Workers ===")
-    async_start = time.time()
-    async_worker_tasks = [
-        worker_async(num_requests, worker_id=i+1, latencies=async_latencies)
-        for i in range(num_workers)
-    ]
-    await asyncio.gather(*async_worker_tasks)
-    async_end = time.time()
+#     # Async workers execution
+#     print("\n=== Async Workers ===")
+#     async_start = time.time()
+#     async_worker_tasks = [
+#         worker_async(num_requests, worker_id=i+1, latencies=async_latencies)
+#         for i in range(num_workers)
+#     ]
+#     await asyncio.gather(*async_worker_tasks)
+#     async_end = time.time()
 
-    # Calculate total times
-    sync_total_time = sum(sync_times)
-    async_total_time = async_end - async_start
+#     # Calculate total times
+#     sync_total_time = sum(sync_times)
+#     async_total_time = async_end - async_start
 
-    # Calculate min, max, avg latencies
-    sync_min_latency = min(sync_latencies)
-    sync_max_latency = max(sync_latencies)
-    sync_avg_latency = sum(sync_latencies) / len(sync_latencies)
+#     # Calculate min, max, avg latencies
+#     sync_min_latency = min(sync_latencies)
+#     sync_max_latency = max(sync_latencies)
+#     sync_avg_latency = sum(sync_latencies) / len(sync_latencies)
 
-    async_min_latency = min(async_latencies)
-    async_max_latency = max(async_latencies)
-    async_avg_latency = sum(async_latencies) / len(async_latencies)
+#     async_min_latency = min(async_latencies)
+#     async_max_latency = max(async_latencies)
+#     async_avg_latency = sum(async_latencies) / len(async_latencies)
 
-    # Print results
-    print("\n=== Performance Results ===")
-    print(f"Sync Total Time: {sync_total_time:.4f} seconds")
-    print(f"Async Total Time: {async_total_time:.4f} seconds")
-    print(f"Sync Min Latency: {sync_min_latency:.4f} seconds")
-    print(f"Sync Max Latency: {sync_max_latency:.4f} seconds")
-    print(f"Sync Avg Latency: {sync_avg_latency:.4f} seconds")
-    print(f"Async Min Latency: {async_min_latency:.4f} seconds")
-    print(f"Async Max Latency: {async_max_latency:.4f} seconds")
-    print(f"Async Avg Latency: {async_avg_latency:.4f} seconds")
+#     # Print results
+#     print("\n=== Performance Results ===")
+#     print(f"Sync Total Time: {sync_total_time:.4f} seconds")
+#     print(f"Async Total Time: {async_total_time:.4f} seconds")
+#     print(f"Sync Min Latency: {sync_min_latency:.4f} seconds")
+#     print(f"Sync Max Latency: {sync_max_latency:.4f} seconds")
+#     print(f"Sync Avg Latency: {sync_avg_latency:.4f} seconds")
+#     print(f"Async Min Latency: {async_min_latency:.4f} seconds")
+#     print(f"Async Max Latency: {async_max_latency:.4f} seconds")
+#     print(f"Async Avg Latency: {async_avg_latency:.4f} seconds")
 
-    # Calculate percentage difference
-    if sync_total_time > async_total_time:
-        percentage_faster = (sync_total_time - async_total_time) / sync_total_time * 100
-        print(f"Async is {percentage_faster:.2f}% faster than Sync.")
-    else:
-        percentage_faster = (async_total_time - sync_total_time) / async_total_time * 100
-        print(f"Sync is {percentage_faster:.2f}% faster than Async.")
+#     # Calculate percentage difference
+#     if sync_total_time > async_total_time:
+#         percentage_faster = (sync_total_time - async_total_time) / sync_total_time * 100
+#         print(f"Async is {percentage_faster:.2f}% faster than Sync.")
+#     else:
+#         percentage_faster = (async_total_time - sync_total_time) / async_total_time * 100
+#         print(f"Sync is {percentage_faster:.2f}% faster than Async.")
 
-# Run comparison
-asyncio.run(compare_sync_async(num_requests=1000, num_workers=5))
+# # Run comparison
+# asyncio.run(compare_sync_async(num_requests=1000, num_workers=5))
 
 
 
@@ -231,17 +231,14 @@ import time
 import aiohttp
 import asyncio
 from itertools import cycle
-errors =0
-async def fetch(url, session, req_id, worker_id, response_times):
-    global errors
+async def fetch(url, session, worker_id, response_times):
     try:
         start_time = time.time()  # Record the time when the request starts
-        print(f"Worker: {worker_id} - Request: {req_id} - sent to {url}", flush=True)
+        print(f"Worker: {worker_id} - Request:  - sent to {url}", flush=True)
 
         async with session.get(url) as response:
             if response.status != 200:
-                error+=1
-                print(f"Worker: {worker_id} - Request: {req_id} to {url} -----------error-----------------", flush=True)
+                print(f"Worker: {worker_id} - Request: to {url} -----------error-----------------", flush=True)
                 return ""
 
             response.raise_for_status()
@@ -250,14 +247,14 @@ async def fetch(url, session, req_id, worker_id, response_times):
             response_time = end_time - start_time  # Calculate the time taken for the request
             response_times.append(response_time)  # Store the response time for later analysis
 
-            # print(f"Worker: {worker_id} - Request: {req_id} - Response Time: {response_time:.4f}s - Response from {url}", flush=True)
+            print(f"Worker: {worker_id} - Request: - Response Time: {response_time:.4f}s - Response from {url}", flush=True)
             return ""
 
     except aiohttp.ClientError as e:
         print(f"Request to {url} failed: {e}")
         return {"error": str(e)}
     except Exception as e:
-        print(f"Unexpected error in worker {worker_id}, request {req_id}: {e}")
+        print(f"Unexpected error in worker {worker_id}, request : {e}")
 
 async def worker(urls, num_requests, worker_id, response_times):
     """An async worker application that makes a series of async requests across multiple URLs."""
@@ -266,7 +263,7 @@ async def worker(urls, num_requests, worker_id, response_times):
 
     async with aiohttp.ClientSession() as session:
         # Cycle through URLs and create tasks for each request
-        tasks = [fetch(url, session, req_id, worker_id, response_times) for req_id, url in zip(range(num_requests), cycle(urls))]
+        tasks = [fetch(url, session, worker_id, response_times) for url in urls]
         results = await asyncio.gather(*tasks, return_exceptions=True)  # Ensures all tasks complete even if some fail
 
     worker_end = time.time()
@@ -288,7 +285,6 @@ async def main_app(urls, num_requests_per_worker, num_workers):
 
     # Run all workers concurrently
     all_results = await asyncio.gather(*worker_tasks, return_exceptions=True)
-    global errors
     # Calculate statistics for the response times
     if response_times:
         avg_response_time = sum(response_times) / len(response_times)
@@ -298,7 +294,6 @@ async def main_app(urls, num_requests_per_worker, num_workers):
         print(f"Min Response Time: {min_response_time:.4f}s")
         print(f"Max Response Time: {max_response_time:.4f}s")
 
-        print(f"errors :{errors}")
 
     main_end = time.time()
     print("Main application finished.")
@@ -307,13 +302,19 @@ async def main_app(urls, num_requests_per_worker, num_workers):
     return all_results
 
 # Configurations
+# urls = [
+#     "http://0.0.0.0:8081/surveys",
+#     "http://0.0.0.0:8081/users",
+#     "http://0.0.0.0:8081/answers",
+#     "http://0.0.0.0:8081/user-responses"
+# ]  # Add more URLs as needed
 urls = [
-    "http://0.0.0.0:8081/surveys",
-    "http://0.0.0.0:8081/users",
-    "http://0.0.0.0:8081/answers",
-    "http://0.0.0.0:8081/user-responses"
+    "https://survey-builder-production.up.railway.app/surveys",
+    "https://survey-builder-production.up.railway.app/users",
+    "https://survey-builder-production.up.railway.app/answers",
+    "https://survey-builder-production.up.railway.app/user-responses"
 ]  # Add more URLs as needed
-num_requests_per_worker = 1000
+num_requests_per_worker = 1
 num_workers = 10
 
 # Run the main application

@@ -19,7 +19,7 @@ ENV PROCESSES=1
 ENV WORKERS=1
 ENV FAST_MODE="false"
     # ENTRYPOINT ["python3", "-m", "svc"]
-CMD ["python3", "-m", "svc", "--log-level=DEBUG"]    
+CMD ["python3", "-m", "svc", "--log-level=INFO"]    
 
 
 # FROM python:3.11-bookworm
@@ -31,7 +31,7 @@ CMD ["python3", "-m", "svc", "--log-level=DEBUG"]
 # COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf    
 # EXPOSE 8080    
 #     # ENTRYPOINT ["python3", "-m", "svc"]
-#     # CMD ["python3", "-m", "svc", "--log-level=DEBUG"]    
+#     # CMD ["python3", "-m", "svc", "--log-level=info"]    
 # ENV PROCESSES=1
 # ENV WORKERS=1
 # ENV FAST_MODE="false"

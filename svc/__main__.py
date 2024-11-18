@@ -126,7 +126,7 @@ async def create_response(request):
 
 
 
-            logger.debug(f"user response {response_id} saved ")
+            logger.info(f"user response {response_id} saved ")
             return {"data": f"user response {response_id} saved"}
     except Exception as e:
         logger.error(f"Error occured while saving UserResponse {e}")
@@ -140,7 +140,7 @@ async def get_all_response():
         with SessionLocal() as session:
             responses = session.query(UserResponse).all()
             responses = [await response.as_dict() for response in responses]
-            logger.debug("All responses fetched from DB")
+            logger.info("All responses fetched from DB")
             return {"data": responses}
     except Exception as e:
         logger.error(f"Error occured while fetching all UserResponses {e}")
@@ -163,7 +163,7 @@ async def get_response(request):
                 return Response(status_code=404,headers={"Content-Type":"application/json"},description=b'{"error":"response does not exist"}')
 
             record =await record.as_dict()
-            logger.debug(f"response {record.get('response_id',None)} fetched from DB")
+            logger.info(f"response {record.get('response_id',None)} fetched from DB")
             return {"data": record}
 
     except Exception as e:
@@ -181,7 +181,7 @@ async def get_all_surveys():
 
             surveys = [await survey.as_dict() for survey in surveys]
             
-            logger.debug("all surveys fetched from DB")
+            logger.info("all surveys fetched from DB")
             return {"data": surveys}
     except Exception as e:
         logger.error(f"Error occured while fetching all surveys {e}")
@@ -204,7 +204,7 @@ async def get_survey(request):
                 return Response(status_code=404,headers={"Content-Type":"application/json"},description=b'{"error":"survey does not exists"}')
 
             survey =await survey.as_dict()
-            logger.debug(f"survey {survey.get('survey_id',None)} fetched from DB")
+            logger.info(f"survey {survey.get('survey_id',None)} fetched from DB")
             return {"data": survey}
 
     except Exception as e:
@@ -234,7 +234,7 @@ async def delete_survey(request):
 
             record = session.delete(survey)
             session.commit()
-            logger.debug(f"survey {id} deleted from DB")
+            logger.info(f"survey {id} deleted from DB")
             return {"data":f"survey {id} deleted success"}
 
     except Exception as e:
@@ -329,7 +329,7 @@ async def create_user(request):
             session.commit()
             session.refresh(user)
 
-        logger.debug("user created success")
+        logger.info("user created success")
         return {"data": "user created successfully"}
 
     except Exception as e:
@@ -349,7 +349,7 @@ async def get_users():
         with SessionLocal() as session:
             users = session.query(User).all()
             users = [await user.as_dict() for user in users]
-        logger.debug("all users fetched from db")
+        logger.info("all users fetched from db")
         return {"users": users}
     except Exception as e:
         logger.error(f"error while fetching all users : {e}")
@@ -373,7 +373,7 @@ async def get_users():
 #             for user in users
 #         ]
 
-#         logger.debug("All users fetched from db")
+#         logger.info("All users fetched from db")
 #         return {"users": users}
 
 
