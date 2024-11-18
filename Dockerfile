@@ -1,39 +1,44 @@
-# ---- Build the Python App ----
-# ---- Build the Python App ----
-    FROM python:3.11-bookworm
 
-    # Install supervisor
-    RUN apt-get update && apt-get install -y supervisor
-    
-    # Set the working directory
-    WORKDIR /workspace
-    
-    # Set PYTHONPATH to make `models` accessible as a top-level module
-    ENV PYTHONPATH="${PYTHONPATH}:/workspace/svc"
-    
-    # Copy application code to the container
-    COPY . .
-    
-    # Install Python dependencies
-    RUN pip install --no-cache-dir --upgrade -r requirements.txt
-    
-    # Copy supervisord configuration
-    COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-    
-    # Expose the port used by the application
-    EXPOSE 8080
-    
-    # Start Supervisor to manage the Python app
+FROM python:3.11-bookworm
+RUN apt-get update && apt-get install -y supervisor
+WORKDIR /workspace    
+ENV PYTHONPATH="${PYTHONPATH}:/workspace/svc"    
+COPY . .    
+RUN pip install --no-cache-dir --upgrade -r requirements.txt    
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf    
+EXPOSE 8080    
+ENV POSTGRES_USER="djgoDBmain_owner"
+ENV POSTGRES_PASSWORD="0YvOjC7yEeHi"
+ENV POSTGRES_DB="djgoDBmain"
+ENV POSTGRES_HOST="ep-lingering-term-a5gpgv2e.us-east-2.aws.neon.tech"
+ENV POSTGRES_PORT="5432"
+# POSTGRES_DB_URL="postgresql+asyncpg://djgoDBmain_owner:0YvOjC7yEeHi@ep-lingering-term-a5gpgv2e.us-east-2.aws.neon.tech/djgoDBmain"
+
+
+ENV PROCESSES=1
+ENV WORKERS=1
+ENV FAST_MODE="false"
     # ENTRYPOINT ["python3", "-m", "svc"]
-    # CMD ["python3", "-m", "svc", "--log-level=DEBUG"]
-    
-# Define default values for processes, workers, and fast mode
-    ENV PROCESSES=1
-    ENV WORKERS=1
-    ENV FAST_MODE="false"
+CMD ["python3", "-m", "svc", "--log-level=DEBUG"]    
 
-# Use conditional statement for --fast
-ENTRYPOINT ["sh", "-c", "python3 -m svc --processes $PROCESSES --workers $WORKERS $( [ \"$FAST_MODE\" = \"true\" ] && echo \"--fast\" ) --log-level $LOG_LEVEL"]
+
+# FROM python:3.11-bookworm
+# RUN apt-get update && apt-get install -y supervisor
+# WORKDIR /workspace    
+# ENV PYTHONPATH="${PYTHONPATH}:/workspace/svc"    
+# COPY . .    
+# RUN pip install --no-cache-dir --upgrade -r requirements.txt    
+# COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf    
+# EXPOSE 8080    
+#     # ENTRYPOINT ["python3", "-m", "svc"]
+#     # CMD ["python3", "-m", "svc", "--log-level=DEBUG"]    
+# ENV PROCESSES=1
+# ENV WORKERS=1
+# ENV FAST_MODE="false"
+# ENTRYPOINT ["sh", "-c", "python3 -m svc --processes $PROCESSES --workers $WORKERS $( [ \"$FAST_MODE\" = \"true\" ] && echo \"--fast\" ) --log-level $LOG_LEVEL"]
+
+
+
 
 
 
