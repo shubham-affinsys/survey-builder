@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select
 from models import Answer
 
+
 async def fetch_all_answers(session: Session,
                            tenant=None,
                            survey_id=None,
@@ -19,6 +20,11 @@ async def fetch_all_answers(session: Session,
                            question_id=None,
                            limit=None,
                            offset=None):
+    
+    """
+    fn makes query to DB to fetch answers based on parameters session is the only mandatory parameter
+    return list of answers fitered on basis of fn params
+    """
     try:
         # Build base query
         query = session.query(Answer)
@@ -78,6 +84,10 @@ async def fetch_survey(session,survey_id):
 
 
 async def format_survey_data(data):
+    """
+    request.json() fn is not able to format nested value and takes tem as string
+    returns a json/dict
+    """
     try:
         if isinstance(data.get('nodes'), str):
             data['nodes'] = json.loads(data['nodes'])
@@ -106,4 +116,3 @@ async def format_survey_data(data):
 # MISCS
 def generate_uuid():
     return str(uuid.uuid4())
-
