@@ -1,19 +1,25 @@
-from robyn import Robyn,Headers,Response
+from http.client import HTTPException
+from robyn import Robyn,Headers,Response,Request,serve_file,html,WebSocket,WebSocketConnector
 import models
 from models import *
 from log import logger
 import json
 from utils import generate_uuid, fetch_all_answers, fetch_survey,format_survey_data
-
 from validator import validate_user_response,is_valid_uuid, is_valid_format_survey, validate_data_survey
-
-
+from utils import fetch_users, create_survey_json_file
+from auth import get_password_hash,BasicAuthHandler
+from robyn.authentication import AuthenticationHandler, BearerGetter, Identity
 
 app = Robyn(__file__)
 
+
+
 # @app.before_request()
 # def before_req(request):
-#     print("request recieved")
+#     print(request.identity)
+#     if request.identity is not  None:
+#         print(f"request recieved {request}")
+
 #     return request
 
 # @app.after_request()
@@ -152,7 +158,7 @@ async def get_all_response():
     try:
         with SessionLocal() as session:
             responses = session.query(UserResponse).all()
-            responses = [await response.as_dict() for response in responses]
+            responses = [response.as_dict() for response in responses]
             logger.info("All responses fetched from DB")
             return {"data": responses}
     except Exception as e:
@@ -192,7 +198,7 @@ async def get_all_surveys():
         with SessionLocal() as session:
             surveys = session.query(Survey).all()
 
-            surveys = [await survey.as_dict() for survey in surveys]
+            surveys = [survey.as_dict() for survey in surveys]
             
             logger.info("all surveys fetched from DB")
             return {"data": surveys}
@@ -284,7 +290,14 @@ async def create_survey(request):
             session.add(new_survey)
             session.commit()
             session.refresh(new_survey)
+
         logger.info(f"survey created success id {survey_id}")
+
+        file_created = await create_survey_json_file(data)
+
+        if not file_created:
+            logger.error("json file was not cerated")
+
         return {"data":f"survey created success {survey_id}"}
 
     except Exception as e:
@@ -300,6 +313,8 @@ naive_time = current_time.replace(tzinfo=None)
 
 
 
+
+
 @app.post("/create-user")
 async def create_user(request):
     try:
@@ -309,19 +324,25 @@ async def create_user(request):
             # Check if user already exists
             # result = await session.execute(select(User).filter(User.username == data.get('username')))
             # existing_user = result.scalar_one_or_none()
-
             existing_user = session.query(User).filter(User.username == data.get('username')).first()
             if existing_user:
                 logger.warning("username already exists")
-                return Response(status_code=409,headers=Headers({"Content-Type":"application/json"}),description=b'{"error":"user already exists"}')
-
-            # Create new user
+                return Response(status_code=409,headers=Headers({"Content-Type":"application/json"}),description=b'{"error":"username already exists"}')
+            
+            user_pass = data.get('password',None)
+            if not user_pass:
+                logger.warning("password filed is was not provided")
+                return {"error":"password filed is was not provided"}
+            
+            hashed_password =  get_password_hash(user_pass)
             user = User(
                 username=data.get('username', 'unknown'),
                 mobile_no=data.get('mobile_no', None),
                 email=data.get('email', None),
+                hashed_password=hashed_password,
                 created_at=naive_time
             )
+
             session.add(user)
             session.commit()
             session.refresh(user)
@@ -344,13 +365,13 @@ from sqlalchemy.future import select
 async def get_users():
     try:
         with SessionLocal() as session:
-            users = session.query(User).all()
-            users = [await user.as_dict() for user in users]
+            users = await fetch_users(session)
         logger.info("all users fetched from db")
         return {"users": users}
     except Exception as e:
         logger.error(f"error while fetching all users : {e}")
         return Response(status_code=500,headers=Headers({"Content-Type":"application/json"}),description=b'{"error":"Internal Server Error"}')
+
 
 # ASYNC
 # @app.get("/users")
@@ -379,12 +400,110 @@ async def get_users():
 async def index():
     return "Hello World!"
 
+# from auth import BasicAuthHandler, BearerGetter
+
+# app.configure_authentication(BasicAuthHandler(token_getter=BearerGetter()))
+import os
+
+
+@app.get("/html",auth_required=True)
+async def htm(request: Request):
+    try:
+        auth = request.headers.get("Authorization")
+        logger.info(f"request auth info : {auth}")
+
+        if not auth:
+            return Response(status=302, headers={'Location': '/auth/login'},description="Redirecting to Login")
+        
+    except Exception as e:
+        logger.error(f"Error while authenticating user {e}")
+        return Response(status=302, headers={'Location': '/login'})
+    
+    try:
+        file_path = os.getcwd()+"/svc/index.html"
+        print(file_path)
+
+        return serve_file(file_path)
+        # return serve_file(file_path, file_name="my_html")
+
+    except Exception as e:
+        logger.error(f"error:{e}")
+        return html("<h3>Error<h3>")
+
+
+# serve a directory
+app.serve_directory(
+            route="/code_files",
+            directory_path=os.path.join(os.getcwd(), "svc"),
+            index_file="index.html",
+        )
+
+from auth import authenticate_user
+
+@app.post("users/register")
+async def register_user(request):
+    userv= request.json()
+    with SessionLocal() as session:
+        created_user = await create_user(request)
+        return created_user
+
+@app.post("/users/login")
+async def login_user(request):
+    user = request.json()
+    with SessionLocal() as session:
+        token = authenticate_user(session,**user)
+
+    if token is None:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    return {"access_token":token}
+
+@app.get("/users/me", auth_required=True)
+async def get_current_user(request):
+    user = request.identity.claims.get("user")
+    logger.info(f"user info: {user}")
+    return user
+
+# from jinja2 import Environment, FileSystemLoader
+# import os
+# from robyn import Request, Response
+
+# # Set up Jinja2 environment
+# template_loader = FileSystemLoader(searchpath=os.getcwd() + '/svc/templates/')
+# template_env = Environment(loader=template_loader)
+
+# def render_template(template_name, **kwargs):
+#     template = template_env.get_template(template_name)
+#     return template.render(**kwargs)
+
+from robyn.templating import JinjaTemplate
+import pathlib
+
+current_file_path = pathlib.Path(__file__).parent.resolve()
+JINJA_TEMPLATE = JinjaTemplate(os.path.join(current_file_path, "templates"))
+
+@app.get("/template_render")
+def template_render(template_name):
+    context = {"framework": "Robyn", "templating_engine": "Jinja2"}
+
+    template = JINJA_TEMPLATE.render_template(template_name=f"{template_name}", **context)
+    return template
+
+@app.get("/login")
+async def login_page(request: Request):
+    try:
+        # Render the login page using Jinja2
+        login_page = template_render("login.html")
+        return login_page
+    except Exception as e:
+        logger.error(f"Error serving login page: {e}")
+        return Response(500, description="Error loading login page.",headers={"Content-type":"text/html"})
+
 
 if __name__ == "__main__":
     # app.startup_handler(connect_db)
     # app.startup_handler(connect_db)
     # app.shutdown_handler(shutdown_db)
     
+    app.configure_authentication(BasicAuthHandler(token_getter=BearerGetter()))
     app.start(host="0.0.0.0",port=8080)
-
-

@@ -1,0 +1,118 @@
+{
+    "created_at": "2024-11-05T10:30:00Z",
+    "created_by": "shubham_dev1",
+    "description": "A survey to collect feedback on customer satisfaction.",
+    "nodes": {
+        "node_111": {
+            "height": 40,
+            "id": "node_111",
+            "name": "start",
+            "next": [
+                "node_222"
+            ],
+            "position": {
+                "x": 12,
+                "y": 50
+            },
+            "previous": [],
+            "type": "start",
+            "width": 90
+        },
+        "node_222": {
+            "height": 40,
+            "id": "node_222",
+            "metadata": {
+                "question_id": "question_111"
+            },
+            "name": "question_111",
+            "next": [
+                "node_333",
+                "node_444",
+                "node_555",
+                "node_666"
+            ],
+            "position": {
+                "x": 52,
+                "y": 100
+            },
+            "previous": [
+                "node_111"
+            ],
+            "type": "question",
+            "width": 90
+        }
+    },
+    "questions": {
+        "question_001": {
+            "data": {
+                "options": [
+                    {
+                        "sentiment": "positive",
+                        "value": "Very Satisfied"
+                    },
+                    {
+                        "sentiment": "positive",
+                        "value": "Satisfied"
+                    },
+                    {
+                        "sentiment": "negative",
+                        "value": "Not Satisfied"
+                    },
+                    {
+                        "sentiment": "neutral",
+                        "value": "Neutral"
+                    }
+                ]
+            },
+            "depends_on": [],
+            "description": "https://image.url.com/",
+            "is_required": "true",
+            "next": {
+                "negative": "question_002",
+                "neutral": "question_003",
+                "no_sentiment": "question123",
+                "positive": "question_001"
+            },
+            "sentiment": "no_sentiment",
+            "text": "How satisfied are you with our service?",
+            "type": "mcq"
+        },
+        "question_003": {
+            "data": {
+                "input": {
+                    "sentiment": "no_sentiment",
+                    "value": "placeholder value"
+                }
+            },
+            "depends_on": [
+                {
+                    "question_id": "question123",
+                    "sentiment": "negative"
+                },
+                {
+                    "question_id": "question123",
+                    "sentiment": "ANY"
+                }
+            ],
+            "description": "https://terms.and.conditiions.com/",
+            "is_required": "true",
+            "next": {
+                "negative": "",
+                "neutral": "",
+                "no_sentiment": "question123",
+                "positive": ""
+            },
+            "sentiment": "negative",
+            "text": "How was your expirence with our insurance ploicy?",
+            "type": "text_feild"
+        }
+    },
+    "survey_id": "a590aa59-9c67-4305-adb8-03411b48bda1",
+    "survey_title": "Customer Feedback",
+    "tenant": "tenant123",
+    "theme_data": {
+        "colors": "#3498db",
+        "logo": "https://example.com/logo.png"
+    },
+    "total_questions": 10
+}

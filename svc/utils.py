@@ -9,7 +9,7 @@ from sqlalchemy.future import select
 #ANSWERS
 from sqlalchemy.orm import Session
 from sqlalchemy import select
-from models import Answer
+from models import Answer, Survey, User, UserResponse, Question
 
 
 async def fetch_all_answers(session: Session,
@@ -55,7 +55,7 @@ async def fetch_all_answers(session: Session,
             return None
 
         # Convert to dict if needed
-        data = [await record.as_dict() for record in data]
+        data = [record.as_dict() for record in data]
         logger.debug("Data fetched from DB")
         return data
 
@@ -66,7 +66,6 @@ async def fetch_all_answers(session: Session,
 
 # SURVEY
 async def fetch_survey(session,survey_id):
-    from models import Survey
 
     try:
         record = session.query(Survey).filter(Survey.survey_id==survey_id).first()
@@ -111,8 +110,115 @@ async def format_survey_data(data):
     except Exception as e:
         logger.error(f"error while formating survey data: {e}")    
         return None
+    
+import os
+SURVEYS_FOLDER =  os.path.join(os.getcwd(), "surveys")
 
+async def create_survey_json_file(data):
+    survey_title = data.get("survey_title", "default")
+    file_name = f"survey_{survey_title}.json"
+
+    os.makedirs(SURVEYS_FOLDER, exist_ok=True)
+    file_path = os.path.join(SURVEYS_FOLDER, file_name)
+
+    try:
+        with open(file_path, "w") as json_file:
+            json.dump(data, json_file, indent=4)
+        logger.info(f"{file_name} file created success")
+        return True
+    
+    except Exception as e:
+        logger.error("error while creating  survey json file")
+        return False
+
+
+# USERS
+async def fetch_users(session:Session):
+    users = session.query(User).all()
+    users = [user.as_dict() for user in users]
+    return users
+
+def fetch_user(session:Session,username:str):
+    try:
+        record = session.query(User).filter(User.username==username).first()
+        if record:
+            user = record.as_dict()
+            return user
+        return None
+    except Exception as e:
+        logger.error(f"Cannot fetch user form DB {e}")
+        return None
 
 # MISCS
 def generate_uuid():
     return str(uuid.uuid4())
+
+
+
+async def send_message(channel,data):
+    logger.info("Predaring Payload to send message...")
+    try:
+        payload = await create_message_payload(channel,data)
+        logger.info(f"Payload created: {payload}")
+        
+        logger.info("sending message to channel..")
+
+        logger.info("messsage sent")
+        return True
+    except Exception as e:
+        logger.error(f"Error while creating payload : {e}")
+        return False
+
+
+async def create_message_payload(platform, content):
+    """
+    Create a payload for WhatsApp, Email, or SMS messaging.
+
+    Args:
+        platform (str): The platform to send the message ('whatsapp', 'email', 'sms').
+        content (dict): The content dictionary with the required keys:
+                        - WhatsApp: {'to': str, 'message': str}
+                        - Email: {'to': str, 'subject': str, 'message': str, 'from_email': str}
+                        - SMS: {'to': str, 'message': str, 'from_number': str}
+
+    Returns:
+        dict: The payload formatted for the specified platform.
+    """
+    if platform == "whatsapp":
+        return {
+            "messaging_product": "whatsapp",
+            "to": content["to"],
+            "type": "text",
+            "text": {"body": content["message"]},
+        }
+    elif platform == "email":
+        return {
+            "personalizations": [
+                {
+                    "to": [{"email": content["to"]}],
+                    "subject": content["subject"],
+                }
+            ],
+            "from": {"email": content["from_email"]},
+            "content": [
+                {
+                    "type": "text/plain",
+                    "value": content["message"],
+                }
+            ],
+        }
+    elif platform == "sms":
+        return {
+            "From": content["from_number"],
+            "To": content["to"],
+            "Body": content["message"],
+        }
+    else:
+        raise ValueError("Unsupported platform. Choose 'whatsapp', 'email', or 'sms'.")
+
+# import asyncio
+
+# channel = "whatsapp"
+# data = {"to": "1234567890", "message": "Hello from WhatsApp!"}
+
+# asyncio.run(send_message(channel=channel,data=data))

@@ -20,7 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine,async_sessi
 
 
 class Helper:
-    async def as_dict(self):
+    def as_dict(self):
         return {column.name: getattr(self, column.name) for column in self.__table__.columns}
 
 def generate_uuid():
@@ -35,6 +35,8 @@ class User(Base, Helper):
     username = Column(String, nullable=False)
     mobile_no = Column(String, nullable=True)
     email = Column(String, nullable=True)
+    hashed_password = Column(String,nullable=False)
+
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     responses = relationship('UserResponse', back_populates='user')
@@ -114,6 +116,7 @@ try:
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     # Base.metadata.drop_all(bind=engine)
     logger.info("engine created!!!")
+    # Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     logger.info("Tables created!!!")
 
