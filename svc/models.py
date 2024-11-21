@@ -5,7 +5,6 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import relationship, sessionmaker, declarative_base
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import create_engine, Column, String, DateTime, JSON, Integer, ForeignKey, Boolean
-from utils import generate_uuid
 import sys
 from log import logger
 
@@ -21,8 +20,11 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine,async_sessi
 
 
 class Helper:
-    async def as_dict(self):
+    def as_dict(self):
         return {column.name: getattr(self, column.name) for column in self.__table__.columns}
+
+def generate_uuid():
+    return str(uuid.uuid4())
 
 
 
@@ -33,6 +35,8 @@ class User(Base, Helper):
     username = Column(String, nullable=False)
     mobile_no = Column(String, nullable=True)
     email = Column(String, nullable=True)
+    hashed_password = Column(String,nullable=False)
+
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     responses = relationship('UserResponse', back_populates='user')
@@ -113,6 +117,7 @@ try:
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     # Base.metadata.drop_all(bind=engine)
     logger.info("engine created!!!")
+    # Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     logger.info("Tables created!!!")
 

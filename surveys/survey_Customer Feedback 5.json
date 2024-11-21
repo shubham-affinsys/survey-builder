@@ -1,0 +1,13 @@
+{
+    "channel_id": "1234567890",
+    "created_at": "",
+    "created_by": "",
+    "description": "A survey to collect feedback on customer satisfaction.",
+    "nodes": {},
+    "questions": {},
+    "survey_id": "aba2d0f5-43a8-4e37-a0cf-a9009f5fa5ac",
+    "survey_title": "Customer Feedback 5",
+    "tenant": "tenant123",
+    "theme_data": {},
+    "total_questions": 10
+}
