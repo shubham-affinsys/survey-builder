@@ -80,6 +80,27 @@ async def fetch_survey(session,survey_id):
     except Exception as e:
         logger.error(f"Error while fetching data from DB {e}")
         return None
+    
+async def create_user_response(data, session, survey, user, response_id):
+    try:
+        response = UserResponse(
+                    survey_id = survey.survey_id,
+                    user_id = user.user_id,
+                    response_id=response_id,
+                    response_sentiment=data.get('response_sentiment',None),
+                    time_taken=data.get('time_taken',0),
+                    no_of_questions_asked=data.get('questions_asked'),
+                    no_of_questions_answered=data.get('questions_answered'),
+                    tenant = data.get('tenant')
+                )
+
+        session.add(response)
+        session.commit()
+        session.refresh(response)
+        return response
+    except Exception as e:
+        logger.error(f"error while creating user-resposne {e}")
+        return None
 
 
 async def format_survey_data(data):
@@ -138,7 +159,7 @@ async def fetch_users(session:Session):
     users = [user.as_dict() for user in users]
     return users
 
-def fetch_user(session:Session,username:str):
+async def fetch_user(session:Session,username:str):
     try:
         record = session.query(User).filter(User.username==username).first()
         if record:

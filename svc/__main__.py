@@ -6,26 +6,21 @@ from log import logger
 import json
 from utils import generate_uuid, fetch_all_answers, fetch_survey,format_survey_data
 from validator import validate_user_response,is_valid_uuid, is_valid_format_survey, validate_data_survey
-from utils import fetch_users, create_survey_json_file
+from utils import fetch_users, create_survey_json_file,create_user_response
 from auth import get_password_hash,BasicAuthHandler
 from robyn.authentication import AuthenticationHandler, BearerGetter, Identity
 
 app = Robyn(__file__)
 
+@app.before_request()
+def before_req(request):
+    logger.debug(f"request recieved {request}")
+    return request
 
-
-# @app.before_request()
-# def before_req(request):
-#     print(request.identity)
-#     if request.identity is not  None:
-#         print(f"request recieved {request}")
-
-#     return request
-
-# @app.after_request()
-# def after_req(response):
-#     print("request completed")
-#     return response
+@app.after_request()
+def after_req(response):
+    logger.debug(f"request completed {response}")
+    return response
 
 
 # ANSWERS
@@ -87,20 +82,10 @@ async def create_response(request):
             
             # create respose
             response_id = generate_uuid()
-            response = UserResponse(
-                survey_id = survey.survey_id,
-                user_id = user.user_id,
-                response_id=response_id,
-                response_sentiment=data.get('response_sentiment',None),
-                time_taken=data.get('time_taken',0),
-                no_of_questions_asked=data.get('questions_asked'),
-                no_of_questions_answered=data.get('questions_answered'),
-                tenant = data.get('tenant')
-            )
+            response  = await create_user_response(data, session, survey, user, response_id)
+            if response is None:
+                logger.error("could not populate user reposne table")
 
-            session.add(response)
-            session.commit()
-            session.refresh(response)
 
 
             # populate questions table
@@ -122,7 +107,7 @@ async def create_response(request):
                         question_text=response_data['text'],
                         is_required=response_data['is_required'].lower() == 'true',
                         question_type=response_data['type'],
-                        sentiment=response_data['sentiment'],
+                          sentiment=response_data['sentiment'],
                         next_questions=response_data['next'].strip('"') if response_data['next'] else None
                     )
                     questions.append(question)
@@ -397,16 +382,16 @@ async def get_users():
 
 
 @app.get("/")
-async def index():
+async def index(request):
     return "Hello World!"
 
-# from auth import BasicAuthHandler, BearerGetter
+from auth import BasicAuthHandler, BearerGetter
 
 # app.configure_authentication(BasicAuthHandler(token_getter=BearerGetter()))
 import os
 
 
-@app.get("/html",auth_required=True)
+@app.get("/html")
 async def htm(request: Request):
     try:
         auth = request.headers.get("Authorization")
@@ -420,7 +405,7 @@ async def htm(request: Request):
         return Response(status=302, headers={'Location': '/login'})
     
     try:
-        file_path = os.getcwd()+"/svc/index.html"
+        file_path = os.getcwd()+"/index.html"
         print(file_path)
 
         return serve_file(file_path)
@@ -434,7 +419,7 @@ async def htm(request: Request):
 # serve a directory
 app.serve_directory(
             route="/code_files",
-            directory_path=os.path.join(os.getcwd(), "svc"),
+            directory_path=os.path.join(os.getcwd()),
             index_file="index.html",
         )
 
@@ -448,15 +433,19 @@ async def register_user(request):
         return created_user
 
 @app.post("/users/login")
-async def login_user(request):
+async def login_user(request: Request):
     user = request.json()
+    next_url = request.query_params.get("next", "/")  
+
+    # Authenticate the user
     with SessionLocal() as session:
-        token = authenticate_user(session,**user)
+        token = await authenticate_user(session, **user)
 
     if token is None:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
-    return {"access_token":token}
+    return {"access_token": token}
+
 
 @app.get("/users/me", auth_required=True)
 async def get_current_user(request):
@@ -483,8 +472,12 @@ current_file_path = pathlib.Path(__file__).parent.resolve()
 JINJA_TEMPLATE = JinjaTemplate(os.path.join(current_file_path, "templates"))
 
 @app.get("/template_render")
-def template_render(template_name):
+def template_render(template_name: str, next_url: str = None):
     context = {"framework": "Robyn", "templating_engine": "Jinja2"}
+    if next_url:
+        context["next_url"] = next_url
+    else:
+        context["next_url"] = "/"
 
     template = JINJA_TEMPLATE.render_template(template_name=f"{template_name}", **context)
     return template
@@ -492,18 +485,29 @@ def template_render(template_name):
 @app.get("/login")
 async def login_page(request: Request):
     try:
-        # Render the login page using Jinja2
+        next_url = request.query_params.get("next", "/")   # redirect to / if next url is not found
+        # login_page = template_render("login.html", next_url=next_url)
         login_page = template_render("login.html")
         return login_page
     except Exception as e:
         logger.error(f"Error serving login page: {e}")
-        return Response(500, description="Error loading login page.",headers={"Content-type":"text/html"})
+        return Response(500, description="Error loading login page.", headers={"Content-type": "text/html"})
 
+
+def sync_decorator_view():
+    def get():
+        return "Hello, world!"
+
+    def post(request: Request):
+        body = request.body
+        return body
+
+app.add_view("/sync/view/decorator", sync_decorator_view)
 
 if __name__ == "__main__":
     # app.startup_handler(connect_db)
     # app.startup_handler(connect_db)
     # app.shutdown_handler(shutdown_db)
     
-    app.configure_authentication(BasicAuthHandler(token_getter=BearerGetter()))
+    # app.configure_authentication(BasicAuthHandler(token_getter=BearerGetter()))
     app.start(host="0.0.0.0",port=8080)
