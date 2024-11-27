@@ -243,3 +243,4 @@ async def create_message_payload(platform, content):
 # data = {"to": "1234567890", "message": "Hello from WhatsApp!"}
 
 # asyncio.run(send_message(channel=channel,data=data))
+

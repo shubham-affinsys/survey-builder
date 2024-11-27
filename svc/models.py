@@ -118,7 +118,7 @@ try:
     # Base.metadata.drop_all(bind=engine)
     logger.info("engine created!!!")
     # Base.metadata.drop_all(bind=engine)
-    Base.metadata.create_all(bind=engine)
+    Base.metadata.create_all(bind=engine,checkfirst=True)
     logger.info("Tables created!!!")
 
 except Exception as e:

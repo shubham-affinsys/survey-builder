@@ -1,5 +1,5 @@
 from http.client import HTTPException
-from robyn import Robyn,Headers,Response,Request,serve_file,html,WebSocket,WebSocketConnector
+from robyn import Robyn,Headers,Response,Request,serve_file,html,WebSocket,WebSocketConnector,ALLOW_CORS
 import models
 from models import *
 from log import logger
@@ -298,8 +298,6 @@ naive_time = current_time.replace(tzinfo=None)
 
 
 
-
-
 @app.post("/create-user")
 async def create_user(request):
     try:
@@ -504,6 +502,24 @@ def sync_decorator_view():
 
 app.add_view("/sync/view/decorator", sync_decorator_view)
 
+
+
+
+@app.post("/test_email")
+async def test_email(request):
+    # Set CORS headers
+    response = Response("Thank you for your feedback!", status_code=200)
+    response.headers["Access-Control-Allow-Origin"] = "*"  # Allow requests from all origins
+    response.headers["Access-Control-Allow-Methods"] = "POST, GET, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+    
+    # Parse the form data
+    data = await request.json()
+    print(f"user response is: {data}")
+    
+    return response
+
+ALLOW_CORS(app, origins = ["http://localhost:5500"])
 if __name__ == "__main__":
     # app.startup_handler(connect_db)
     # app.startup_handler(connect_db)

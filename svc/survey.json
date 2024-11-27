@@ -3,11 +3,57 @@
    "survey_id":"survey789",
    "description":"A survey to collect feedback on customer satisfaction.",
    "total_questions":10,
-   "nodes":{},
    "questions":{},
    "created_at":"",
    "tenant":"tenant123",
-   "channel_id":"1234567890",
    "created_by":"",
    "theme_data":{}
+}
+
+
+{
+   "survey_title":"Customer Feedback Survey",
+   "survey_id":"survey789",
+   "description":"A survey to collect feedback on customer satisfaction.",
+   "questions":{},
+   "nodes":{
+      "1234":{
+         "id":'1234',
+         "type":"utter",
+         "metadata":{
+            "utter_name":"utter_question_q1",
+            "slots":[ "slot_options" ]
+         },
+         "coordinates":{
+            "x":1240,
+            "y":500
+         },
+         "next":[
+            "5678"
+         ]
+      },
+
+      "5678":{
+         "id":"5678",
+         "type":"query",
+         "metadata":{
+            "slot":"slot_user_response",
+            "name":"query_user_response_for_q1",
+            "validatore":null,
+            "timeout":10
+         },
+         "coordinates":{
+            "x":600,
+            "y":800
+         },
+         "next":[
+            "fd73a180.2946d",
+            "679d8950.d8aa68",
+            "96ba8580.9822a8",
+            "96ba8580.9822a8",
+            "0c1220129b98e211"
+         ]
+      }
+
+   }
 }
