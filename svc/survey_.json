@@ -43,23 +43,11 @@
           "sentiment":"no_sentiment",
           "data":{
              "options":[
-                {
-                   "value":"Very Satisfied",
-                   "sentiment":"positive"
-                },
-                {
-                   "value":"Satisfied",
-                   "sentiment":"positive"
-                },
-                {
-                   "value":"Not Satisfied",
-                   "sentiment":"negative"
-                },
-                {
-                   "value":"Neutral",
-                   "sentiment":"neutral"
-                }
-             ]
+                {"value":"Very Satisfied","sentiment":"positive"},
+                {"value":"Satisfied","sentiment":"positive"},
+                {"value":"Not Satisfied","sentiment":"negative"},
+                {"value":"Neutral","sentiment":"neutral"}
+               ]
           },
           "depends_on":[
              

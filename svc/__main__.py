@@ -23,8 +23,21 @@ def after_req(response):
     return response
 
 
-# ANSWERS
+#  QUESTION FROM SURVEY CRAETED IN AUTO GEN
+from extractor import get_all_questions
+@app.get("/survey_questions/:survey_id")
+def get_survey_questions(request):
+    survey_id = request.path_params.get("survey_id",None)
 
+    if survey_id is None:
+        logger.error("Survey id was not provided")
+        return {"error":"please provide survey_id"}
+    
+    questions = get_all_questions(survey_id=survey_id)
+    return {"questions":questions}
+
+
+# ANSWERS
 @app.get("/answers")
 async def get_all_answers(request):
     tenant = request.query_params.get('tenant',None)
