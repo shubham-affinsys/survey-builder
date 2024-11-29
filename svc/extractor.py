@@ -300,6 +300,7 @@ operation= [
 #                     }
 #                 ],
 
+# from json_logic import jsonLogic
 
 def get_next_question(operation, data):
     next_question = []
@@ -324,7 +325,7 @@ def get_all_questions(survey_id):
     from autogen import survey_data
 
     # survey_data = get_survey_data(survey_id)
-    formatted_questions = []
+    formatted_questions = {}
 
     for question in survey_data:
         f_ques  = {}
@@ -351,7 +352,7 @@ def get_all_questions(survey_id):
 
             f_ques["options"] = f_options
 
-        formatted_questions.append(f_ques)
+        formatted_questions[f_ques.get("id")]=f_ques
     return  formatted_questions
 
 
@@ -359,5 +360,9 @@ def get_all_questions(survey_id):
 if __name__  == "__main__":
     from autogen import survey_data
     all_questions  = get_all_questions("1")
-    print(all_questions)
-
+    # print(all_questions)
+    for ques in all_questions:
+        if ques.get('rules',None):
+            next_ques = get_next_question(ques.get('rules'),{"input":2})
+            print(next_ques)
+    print("end")

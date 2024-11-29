@@ -1,263 +1,144 @@
-import json
+class SurveyLogic:
+    def __init__(self):
+        self.slots = {
+            "slot_questions": None,  # This should contain the survey data with questions
+            "slot_txt": None,
+            "slot_options": None,
+            "slot_rules": None,
+            "slot_user_response": None,
+            "slot_survey_completed": "false",
+            "q_id": "start",
+        }
 
-def nested_to_json(nested_structure):
-    """
-    Convert a nested list of dictionaries or nested lists into JSON format.
+    def make_question_slots(self):
+        """Set up the slots for the current question."""
+        if self.slots["slot_questions"] == "null" or not self.slots["slot_questions"]:
+            print("No questions available in the survey.")
+            self.slots["slot_survey_completed"] = "true"
+            return
 
-    Args:
-        nested_structure (list | dict): A nested list, dict, or combination of both.
-    
-    Returns:
-        dict | list: JSON-compatible nested structure.
-    """
-    try:
-        # Ensure the structure is JSON-serializable
-        json_string = json.dumps(nested_structure)
-        return json.loads(json_string)
-    except TypeError as e:
-        raise ValueError(f"Non-serializable data detected: {e}")
+        if self.slots["q_id"] == "start":
+            self.slots["q_id"] = 0
 
-# Example usage
-nested_data = [
-    {"id": 1, "name": "Item 1", "details": {"price": 10.5, "stock": 20}},
-    {"id": 2, "name": "Item 2", "details": {"price": 15.0, "stock": 5}},
-    [
-        {"id": 3, "name": "Item 3"},
-        {"id": 4, "name": "Item 4"}
-    ]
-]
+        questions = self.slots["slot_questions"]["questions"]
+        q_id = self.slots["q_id"]
 
-# Get the JSON-compatible structure
-json_compatible_data = nested_to_json(nested_data)
-print(json.dumps(json_compatible_data))  # Pretty print
+        if q_id >= len(questions):
+            print("No more questions. Survey completed.")
+            self.slots["slot_survey_completed"] = "true"
+            return
 
+        # Get the current question
+        current_question = questions[q_id]
+        self.slots["slot_txt"] = current_question.get("label")
+        self.slots["slot_options"] = current_question.get("options", None)
+        self.slots["slot_rules"] = current_question.get("rules", None)
 
+        print(f"Question {q_id + 1}: {self.slots['slot_txt']}")
+        if self.slots["slot_options"]:
+            print(f"Options: {self.slots['slot_options']}")
+        else:
+            print("No options available for this question.")
 
-# slot_options = [
-#         {
-#             "title": "Account Services",
-#             "type": "payload",
-#             "payload": "Account Services"
-#         },
-#             {
-#             "title": "Cheque Services",
-#             "type": "payload",
-#             "payload": "Cheque Services"
-#         },
-#             {
-#             "title": "Card Services",
-#             "type": "payload",
-#             "payload": "Card Services"
-#         },
-#             {
-#             "title": "Bot Services",
-#             "type": "payload",
-#             "payload": "Bot Services"
-#         },
-#         {
-#             "title": "FAQs",
-#             "type": "payload",
-#             "payload": "faq"
-#         }
-#     ]
+    def process_response_and_find_next(self):
+        """Process user response using rules to determine the next question."""
+        user_response = self.slots.get("slot_user_response")
+        if user_response is None:
+            print("No user response found.")
+            return
 
-# ques_18625 = {
-#   "id":"ques_18625",
-#   "project":86,
-#   "utter_name":"welcome",
-#   "utter_data":{
-#     "data":[
-#       {
-#         "id":"card-0",
-#         "list":[
- 
-#         ],
-#         "title":"",
-#         "buttons":[
- 
-#         ],
-#         "file_url":"",
-#         "subtitle":"How was your expirence with our insurance ploicy?",
-#         "frame_url":"",
-#         "image_url":"",
-#         "list_slot":"",
-#         "list_type":"unordered_disc",
-#         "video_url":"",
-#         "button_slot":"",
-#         "post_list_text":""
-#       }
-#     ],
-#     "quick_replies":[
+        rules = self.slots.get("slot_rules")
+        if not rules:
+            print("No rules found for the current question. Moving to the next question.")
+            self.slots["q_id"] += 1
+            return
 
-#     ],
-#     "template_data":{
-#       "template":false,
-#       "template_name":"",
-#       "template_slots":[
- 
-#       ],
-#       "call_to_action_url":"",
-#       "call_to_action_number":""
-#     },
-#     "quick_replies_slot":"slot_options"
-#   },
-#   "channel_code":"webchat",
-#   "lang":"en",
-#   "separate":true,
-#   "slots":[
- 
-#   ],
-#   "env":"dev",
-#   "category":"flow"
-# }
+        # Use jsonLogic to evaluate the rules
+        next_questions = get_next_question(rules, {"response": user_response})
 
-# def make_slot_payload(options):
-#     slot_buttons = []
-#     btn = {}
-#     for option in options:
-#         btn = {
-#             "title":option.get("value"),
-#             "type":"payload",
-#             "payload":option.get("sentiment")
-#         }
-#         slot_buttons.append(btn)
-#         btn={}
+        if next_questions:
+            # Use the first mapped question as the next question
+            next_question_key = next_questions[0]
+            questions = self.slots["slot_questions"]["questions"]
 
+            for idx, question in enumerate(questions):
+                if question.get("id") == next_question_key:
+                    self.slots["q_id"] = idx
+                    break
+        else:
+            print("No valid next question found. Moving to the next sequential question.")
+            self.slots["q_id"] += 1
 
-# slot_survey_data = call_api()
+# Import helper functions
+from functools import reduce
 
-# current_ques_id = None
+def jsonLogic(tests, data=None):
+    """Evaluate jsonLogic rules."""
+    if tests is None or not isinstance(tests, dict):
+        return tests
 
-# if current_ques_id ==  None:
-#     current_ques_id == "ques_1"
-#     slot_text = slot_survey_data["questions"][current_ques_id]["text"]
-#     options = slot_survey_data["questions"][current_ques_id]["options"]
+    data = data or {}
+    op, values = next(iter(tests.items()))
 
-#     slot_buttons = make_slot_payload(options)
+    operations = {
+        "==": lambda a, b: a == b,
+        ">": lambda a, b: a > b,
+        ">=": lambda a, b: a >= b,
+        "<": lambda a, b: a < b,
+        "<=": lambda a, b: a <= b,
+        "and": lambda *args: all(args),
+        "or": lambda *args: any(args),
+        "var": lambda a, not_found=None: reduce(
+            lambda d, k: d.get(k, not_found) if isinstance(d, dict) else not_found,
+            str(a).split("."),
+            data,
+        ),
+    }
 
+    if op not in operations:
+        raise RuntimeError(f"Unrecognized operation '{op}'")
 
-# # import uuid
+    if not isinstance(values, (list, tuple)):
+        values = [values]
 
-# # def convert_survey_to_cj_json(survey_json):
-# #     cj_json = {
-# #         "customer_journey_name": survey_json["survey_title"].replace(" ", "_"),
-# #         "start_node_id": "",
-# #         "nodes": {}
-# #     }
-    
-# #     # Function to generate unique node IDs
-# #     def generate_node_id():
-# #         return str(uuid.uuid4()).replace("-", "")
-    
-# #     # Map nodes from survey_json to cj_json
-# #     for node_id, node_data in survey_json["nodes"].items():
-# #         cj_node = {
-# #             "id": generate_node_id(),
-# #             "type": node_data["type"],
-# #             "metadata": {},
-# #             "coordinates": {
-# #                 "x": node_data["position"]["x"],
-# #                 "y": node_data["position"]["y"]
-# #             },
-# #             "next": []
-# #         }
-        
-# #         # Set start_node_id if the node is the start node
-# #         if node_data["type"] == "start":
-# #             cj_json["start_node_id"] = cj_node["id"]
+    evaluated_values = [jsonLogic(val, data) for val in values]
+    return operations[op](*evaluated_values)
 
-# #         # Handle question nodes
-# #         if node_data["type"] == "question":
-# #             question_id = node_data["metadata"]["question_id"]
-# #             question_data = survey_json["questions"][question_id]
+def get_next_question(operation, data):
+    """Find the next question based on rules."""
+    next_question = []
+    for op in operation:
+        if "if" in op:
+            condition, actions = op["if"]
+            if jsonLogic(condition, data):
+                for action in actions:
+                    if "update" in action and not action["update"]["body"]["hide"]:
+                        entity = action["update"]["entity"][0]
+                        next_question.append(entity.split(".")[-1])
+                break
+    return next_question
 
-# #             if question_data["type"] == "mcq":
-# #                 cj_node["type"] = "utter"
-# #                 cj_node["metadata"]["utter_name"] = f"utter_{question_id}"
-# #                 cj_node["metadata"]["buttons"] = [
-# #                     {"title": option["value"], "payload": option["sentiment"]}
-# #                     for option in question_data["data"]["options"]
-# #                 ]
-# #             elif question_data["type"] == "text_feild":
-# #                 cj_node["type"] = "query"
-# #                 cj_node["metadata"]["query_text"] = question_data["text"]
+# Example Flow
+if __name__ == "__main__":
+    survey_logic = SurveyLogic()
 
-# #             # Map next nodes based on sentiment
-# #             cj_node["next"] = [
-# #                 survey_json["nodes"].get(next_node, {}).get("id", "")
-# #                 for sentiment, next_node in question_data["next"].items()
-# #                 if next_node
-# #             ]
-        
-# #         # Add node to cj_json
-# #         cj_json["nodes"][cj_node["id"]] = cj_node
+    # Example survey data
+    survey_logic.slots["slot_questions"] = {
+        "questions": [
+            {"id": "q1", "label": "How old are you?", "options": ["<18", "18-24", "25+"], "rules": []},
+            {"id": "q2", "label": "What is your gender?", "options": ["Male", "Female"], "rules": []},
+            {"id": "q3", "label": "Do you like our service?", "options": ["Yes", "No"], "rules": []},
+        ]
+    }
 
-# #     return cj_json
+    # Start the survey loop
+    while survey_logic.slots["slot_survey_completed"] == "false":
+        survey_logic.make_question_slots()
+        if survey_logic.slots["slot_survey_completed"] == "true":
+            break
 
+        # Simulate user response (replace with actual input mechanism)
+        survey_logic.slots["slot_user_response"] = input("Your answer: ")
 
-# # # Example Usage
-# # survey_json = {
-# #     "survey_title": "Customer Feedback Survey",
-# #     "survey_id": "daaa6de1-b965-4f96-b658-e4ed42abc265",
-# #     "description": "A survey to collect feedback on customer satisfaction.",
-# #     "total_questions": 10,
-# #     "nodes": {
-# #         "node_111": {
-# #             "id": "node_111",
-# #             "type": "start",
-# #             "name": "start",
-# #             "width": 90,
-# #             "height": 40,
-# #             "position": {
-# #                 "x": 12,
-# #                 "y": 50
-# #             },
-# #             "previous": [],
-# #             "next": ["node_222"]
-# #         },
-# #         "node_222": {
-# #             "id": "node_222",
-# #             "type": "question",
-# #             "name": "question_111",
-# #             "width": 90,
-# #             "height": 40,
-# #             "position": {
-# #                 "x": 52,
-# #                 "y": 100
-# #             },
-# #             "previous": ["node_111"],
-# #             "next": ["node_333", "node_444", "node_555", "node_666"],
-# #             "metadata": {
-# #                 "question_id": "question_001"
-# #             }
-# #         }
-# #     },
-# #     "questions": {
-# #         "question_001": {
-# #             "type": "mcq",
-# #             "text": "How satisfied are you with our service?",
-# #             "description": "https://image.url.com/",
-# #             "is_required": "true",
-# #             "sentiment": "no_sentiment",
-# #             "data": {
-# #                 "options": [
-# #                     {"value": "Very Satisfied", "sentiment": "positive"},
-# #                     {"value": "Satisfied", "sentiment": "positive"},
-# #                     {"value": "Not Satisfied", "sentiment": "negative"},
-# #                     {"value": "Neutral", "sentiment": "neutral"}
-# #                 ]
-# #             },
-# #             "depends_on": [],
-# #             "next": {
-# #                 "positive": "question_001",
-# #                 "negative": "question_002",
-# #                 "neutral": "question_003",
-# #                 "no_sentiment": "question123"
-# #             }
-# #         }
-# #     }
-# # }
-
-# # cj_json = convert_survey_to_cj_json(survey_json)
-# # import json
-# # print(json.dumps(cj_json, indent=4))
+        # Process response and find the next question
+        survey_logic.process_response_and_find_next()

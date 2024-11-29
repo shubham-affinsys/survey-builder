@@ -35,7 +35,7 @@ def get_survey_questions(request):
     
     questions = get_all_questions(survey_id=survey_id)
     logger.info(f"question fetched from db success for survey_id : {survey_id}")
-    return {"questions":questions}
+    return questions
 
 
 
