@@ -332,6 +332,12 @@ def get_all_questions(survey_id):
         f_ques["label"] =  question.get("label")
         f_ques["type"] =  question.get("type")
 
+        action  = question.get('actions',None)
+        if action:
+            # get condition for next question
+            operation = action[0].get("operation")
+            f_ques['rules'] = operation
+
         if question.get("valuesAllowed",None):
             options  = question.get("valuesAllowed").get("options")
             f_options = []
@@ -353,6 +359,5 @@ def get_all_questions(survey_id):
 if __name__  == "__main__":
     from autogen import survey_data
     all_questions  = get_all_questions("1")
+    print(all_questions)
 
-    from pprint import pprint
-    pprint(all_questions)
