@@ -14,12 +14,12 @@ app = Robyn(__file__)
 
 @app.before_request()
 def before_req(request):
-    logger.debug(f"request recieved {request}")
+    logger.debug(f"request recieved --> {request.method} : {request.url.path}  body : {request.body}")
     return request
 
 @app.after_request()
 def after_req(response):
-    logger.debug(f"request completed {response}")
+    logger.debug(f"request completed --> status: {response.status_code} desc :{response.description}")
     return response
 
 
