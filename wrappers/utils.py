@@ -5,8 +5,8 @@ def get_all_qid(slot_questions):
 
 
 def fetch_questions():
-    api_response = requests.get("https://survey-builder-production.up.railway.app/survey_questions/123")
-    # api_response = requests.get("http://127.0.0.1:8080/survey_questions/123")
+    # api_response = requests.get("https://survey-builder-production.up.railway.app/survey_questions/123")
+    api_response = requests.get("http://127.0.0.1:8080/survey_questions/123")
     if api_response.status_code != 200:
         print("Could not fetch questions")
     return api_response.json()
@@ -81,17 +81,21 @@ def jsonLogic(tests, data=None):
 
 
 def get_next_question(operation, data):
-    next_question = []
-    for op in operation:
-        if "if" in op:
-            condition, actions = op["if"]
-            if jsonLogic(condition, data):
-                for action in actions:
-                    if "update" in action and not action["update"]["body"]["hide"]:
-                        entity = action["update"]["entity"][0]
-                        next_question.append(entity.split(".")[-1])  
-                break
-    return next_question
+    try:
+        next_question = []
+        for op in operation:
+            if "if" in op:
+                condition, actions = op["if"]
+                if jsonLogic(condition, data):
+                    for action in actions:
+                        if "update" in action and not action["update"]["body"]["hide"]:
+                            entity = action["update"]["entity"][0]
+                            next_question.append(entity.split(".")[-1])  
+                    break
+        return next_question
+    except Exception as e:
+        print(f"error while getiing next  question {e}")
+        return []
 
 def get_hidden_question_ids(rules):
     hidden_ids = []

@@ -3,6 +3,9 @@ import time
 
 slot_questions = fetch_questions()
 
+if slot_questions.get("error",None) is not None:
+    print("Error while fetching questions")
+
 
 # initialize slots
 
@@ -76,6 +79,7 @@ while len(not_answered) > 0:
         elif len(next_question) > 0:
             q_id = next_question[0]
 
+print("Question remaining" ,not_answered)
 # Final message
 if len(not_answered) == 0:
     print("Thanks for your feedback")

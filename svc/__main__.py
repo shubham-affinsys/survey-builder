@@ -27,15 +27,19 @@ def after_req(response):
 from extractor import get_all_questions
 @app.get("/survey_questions/:survey_id")
 def get_survey_questions(request):
-    survey_id = request.path_params.get("survey_id",None)
+    try:
+        survey_id = request.path_params.get("survey_id",None)
 
-    if survey_id is None:
-        logger.error("Survey id was not provided")
-        return {"error":"please provide survey_id"}
-    
-    questions = get_all_questions(survey_id=survey_id)
-    logger.info(f"question fetched from db success for survey_id : {survey_id}")
-    return questions
+        if survey_id is None:
+            logger.error("Survey id was not provided")
+            return {"error":"please provide survey_id"}
+        
+        questions = get_all_questions(survey_id=survey_id)
+        logger.info(f"question fetched from db success for survey_id : {survey_id}")
+        return questions
+    except Exception as e:
+        logger.error(f"error while fetching survey questions {e}")
+        return {"error":"cannot fetch survey data"}
 
 #  STORE RESPOMSES TO DB
 @app.post("/suvrey_response")
