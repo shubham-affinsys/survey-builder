@@ -7,6 +7,7 @@ COPY . .
 RUN pip install --no-cache-dir --upgrade -r requirements.txt    
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf    
 EXPOSE 8080    
+
 ENV POSTGRES_USER="djgoDBmain_owner"
 ENV POSTGRES_PASSWORD="0YvOjC7yEeHi"
 ENV POSTGRES_DB="djgoDBmain"
