@@ -1,17 +1,4 @@
 services:
-  # postgres:
-  #   image: postgres:17  
-  #   container_name: postgres-db
-  #   environment:
-  #     POSTGRES_USER: shubh
-  #     POSTGRES_PASSWORD: 9504
-  #     POSTGRES_DB: survey_db
-  #     POSTGRES_PORT: 5433 
-  #   ports:
-  #     - "5432:5432" 
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data  
-
   survey-builder:
     image: survey-builder:v2
     container_name: survey-svc
@@ -28,14 +15,8 @@ services:
       LOG_LEVEL: "INFO"
     ports:
       - "8081:8080"
-    # depends_on:
-    #   - postgres
     networks:
       - survey-network
 networks:
-  survey-network:  # Use the default bridge network
+  survey-network:
     external: true 
-
-
-# volumes:
-#   postgres_data:

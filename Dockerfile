@@ -8,15 +8,6 @@ RUN pip install --no-cache-dir --upgrade -r requirements.txt
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf    
 EXPOSE 8080    
 
-ENV POSTGRES_USER="djgoDBmain_owner"
-ENV POSTGRES_PASSWORD="0YvOjC7yEeHi"
-ENV POSTGRES_DB="djgoDBmain"
-ENV POSTGRES_HOST="ep-lingering-term-a5gpgv2e.us-east-2.aws.neon.tech"
-ENV POSTGRES_PORT="5432"
-# POSTGRES_DB_URL="postgresql+asyncpg://djgoDBmain_owner:0YvOjC7yEeHi@ep-lingering-term-a5gpgv2e.us-east-2.aws.neon.tech/djgoDBmain"
-
-ENV RAILWAY_PG_URL="postgresql://postgres:xmQXiOJdGgbtGfnfsislJVqlxafWQwGj@autorack.proxy.rlwy.net:25681/railway"
-
 ENV PROCESSES=1
 ENV WORKERS=1
 ENV FAST_MODE="false"
