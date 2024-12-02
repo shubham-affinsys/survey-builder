@@ -26,7 +26,7 @@ def after_req(response):
 #  QUESTION FROM SURVEY CRAETED IN AUTO GEN
 from extractor import get_all_questions
 @app.get("/survey_questions/:survey_id")
-def get_survey_questions(request):
+async def get_survey_questions(request):
     try:
         survey_id = request.path_params.get("survey_id",None)
 
@@ -43,7 +43,7 @@ def get_survey_questions(request):
 
 #  STORE RESPOMSES TO DB
 @app.post("/suvrey_response")
-def save_survey_response(request):
+async def save_survey_response(request):
     try:
         data = request.json()
         logger.info(f"user response was saved {data}")
