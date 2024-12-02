@@ -37,15 +37,16 @@ def get_survey_questions(request):
     logger.info(f"question fetched from db success for survey_id : {survey_id}")
     return questions
 
+#  STORE RESPOMSES TO DB
 @app.post("/suvrey_response")
 def save_survey_response(request):
     try:
         data = request.json()
         logger.info(f"user response was saved {data}")
-        return Response(status_code=200,headers={"Content-Type":"application/json"},description="Response saved success")
+        return Response(status_code=200,headers={"Content-Type":"application/json"},description=b'{"status":"Response saved success}')
     except Exception as e:
         logger.error(f"error wile saving survey response {e}")
-        return Response(status_code=500,headers={"Content-Type":"application/json"},description="Invalid data provided")
+        return Response(status_code=500,headers={"Content-Type":"application/json"},description=b'{"error":"invalid format expecting JSON"}')
 
 
 
