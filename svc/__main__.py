@@ -43,10 +43,11 @@ def save_survey_response(request):
     try:
         data = request.json()
         logger.info(f"user response was saved {data}")
-        return Response(status_code=200,headers={"Content-Type":"text/plain"},description="Response saved success")
+        # return Response(status_code=200,headers={"Content-Type":"text/plain"},description="Response saved success")
+        return {"description":"Response saved success"}
     except Exception as e:
         logger.error(f"error wile saving survey response {e}")
-        return Response(status_code=500,headers={"Content-Type":"text/plain"},description="Invalid data provided")
+        return {"error":"Invalid data provided"}
 
 
 
