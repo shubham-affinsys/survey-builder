@@ -13,7 +13,7 @@ services:
   #     - postgres_data:/var/lib/postgresql/data  
 
   survey-builder:
-    image: survey-builder:v1
+    image: survey-builder:v2
     container_name: survey-svc
     environment:
       POSTGRES_USER: shubh
@@ -21,6 +21,7 @@ services:
       POSTGRES_DB: survey_db
       POSTGRES_HOST: postgres-db
       POSTGRES_PORT: 5432
+      RAILWAY_PG_URL: "postgresql://postgres:xmQXiOJdGgbtGfnfsislJVqlxafWQwGj@autorack.proxy.rlwy.net:25681/railway"
       PROCESSES: 2  
       WORKERS: 1         
       FAST_MODE: "false"
