@@ -4,7 +4,7 @@ RUN apt-get update && apt-get install -y supervisor
 WORKDIR /workspace    
 ENV PYTHONPATH="${PYTHONPATH}:/workspace/svc"    
 COPY . .    
-RUN pip install --no-cache-dir --upgrade -r requirements.txt    
+RUN pip install -r requirements.txt    
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf    
 EXPOSE 8080    
 

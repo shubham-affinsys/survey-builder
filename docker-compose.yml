@@ -1,6 +1,6 @@
 services:
   survey-builder:
-    image: survey-builder:v2
+    image: survey-builder:v3
     container_name: survey-svc
     environment:
       POSTGRES_USER: shubh
@@ -9,7 +9,7 @@ services:
       POSTGRES_HOST: postgres-db
       POSTGRES_PORT: 5432
       RAILWAY_PG_URL: "postgresql://postgres:xmQXiOJdGgbtGfnfsislJVqlxafWQwGj@autorack.proxy.rlwy.net:25681/railway"
-      PROCESSES: 2  
+      PROCESSES: 1  
       WORKERS: 1         
       FAST_MODE: "false"
       LOG_LEVEL: "INFO"
