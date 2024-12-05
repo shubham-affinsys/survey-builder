@@ -17,8 +17,6 @@ Base = declarative_base()
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine,async_sessionmaker
 
 
-
-
 class Helper:
     def as_dict(self):
         return {column.name: getattr(self, column.name) for column in self.__table__.columns}

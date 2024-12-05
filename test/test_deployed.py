@@ -17,15 +17,15 @@ urls = [
 
 
 start = time.time()
-n = 100 # Number of iterations
+n = 10 # Number of iterations
 
 # counter = count()  # Thread-safe atomic counter
 
 async def req(client, url):
     # current_request = next(counter)  # Atomic increment
-    # print(f"Request sent {current_request}")
+    print(f"Request sent ")
     response = await client.get(url)
-    # print(f"Got response for {current_request}: {response.status_code}")
+    print(f"Got response for : {response.status_code}")
 
 async def main():
     async with httpx.AsyncClient() as client:

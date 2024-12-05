@@ -332,6 +332,7 @@ def get_all_questions(survey_id):
         f_ques["id"] = question.get("id")
         f_ques["label"] =  question.get("label")
         f_ques["type"] =  question.get("type")
+        
 
         action  = question.get('actions',None)
         if action:

@@ -1,16 +1,16 @@
 services:
   survey-builder:
-    image: survey-builder:v3
+    image: survey-builder:v1
     container_name: survey-svc
     environment:
-      POSTGRES_USER: shubh
-      POSTGRES_PASSWORD: 9504
-      POSTGRES_DB: survey_db
-      POSTGRES_HOST: postgres-db
-      POSTGRES_PORT: 5432
+      # POSTGRES_USER: shubh
+      # POSTGRES_PASSWORD: 9504
+      # POSTGRES_DB: survey_db
+      # POSTGRES_HOST: postgres-db
+      # POSTGRES_PORT: 5432
       RAILWAY_PG_URL: "postgresql://postgres:xmQXiOJdGgbtGfnfsislJVqlxafWQwGj@autorack.proxy.rlwy.net:25681/railway"
-      PROCESSES: 1  
-      WORKERS: 1         
+      PROCESSES: 2
+      WORKERS: 4        
       FAST_MODE: "false"
       LOG_LEVEL: "INFO"
     ports:
@@ -20,3 +20,5 @@ services:
 networks:
   survey-network:
     external: true 
+
+# sudo systemctl restart docker.socket docker.service

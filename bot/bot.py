@@ -22,7 +22,7 @@ responses = []
 
 while len(not_answered) > 0:
     # Fill slots of question and option
-    ques, options, rule = create_question(q_id, slot_questions)
+    ques, options, rule, validations = create_question(q_id, slot_questions)
 
     valid_responses = []
     print(ques)
@@ -32,6 +32,10 @@ while len(not_answered) > 0:
             print("o ", option.get("title"))
 
     user_response = input("user: ")
+    try:
+        user_response = int(user_response)
+    except ValueError:
+        pass 
     
     # Validate user response
     if user_response == "cancel":
@@ -40,8 +44,18 @@ while len(not_answered) > 0:
 
     if len(valid_responses) > 0:
         if user_response not in valid_responses:
+            
             print("Enter a valid response")
             continue  # Prompt the user again without proceeding further
+
+    # check given validations in questions
+
+    is_validated = check_validation(validations)
+
+    if not is_validated:
+        print("Enter a valid response")
+        continue
+
 
     # Map user response to text option
     response_text = None
@@ -88,3 +102,27 @@ if len(not_answered) == 0:
 print("\nUser Responses:")
 for response in responses:
     print(f"Question ID: {response['question_id']}, User Response: {response['user_response']}, Response Text: {response['response_text']}")
+
+
+
+import time
+
+def time_wrapper(func):
+    def wrapper(*args, **kwargs):
+        start_time = time.time()  
+        result = func(*args, **kwargs)
+        end_time = time.time()  
+        execution_time = end_time - start_time 
+        print(f"Execution time of {func.__name__}: {execution_time:.4f} s")
+        return result
+    return wrapper
+
+#
+# @time_wrapper
+# def example_function(n):
+#     total = 0
+#     for i in range(n):
+#         total += i
+#     return total
+
+# result = example_function(1000000)

@@ -1,9 +1,23 @@
 import requests
 
+import time
+
+def time_wrapper(func):
+    def wrapper(*args, **kwargs):
+        start_time = time.time()  
+        result = func(*args, **kwargs)
+        end_time = time.time()  
+        execution_time = end_time - start_time 
+        print(f"Execution time of {func.__name__}: {execution_time:.4f} s")
+        return result
+    return wrapper
+
+
+
 def get_all_qid(slot_questions):
     return [id for id in slot_questions]
 
-
+@time_wrapper
 def fetch_questions():
     # api_response = requests.get("https://survey-builder-production.up.railway.app/survey_questions/123")
     api_response = requests.get("http://127.0.0.1:8080/survey_questions/123")
@@ -19,6 +33,7 @@ def create_question(q_id,slot_questions):
     slot_txt = current_question.get("label")
     slot_options = current_question.get("options",None)
     slot_rule = current_question.get("rules",None)
+    slot_validation = current_question.get("validation",None)
 
     # if slot_options is None:
         # print("option not found")     
@@ -27,7 +42,7 @@ def create_question(q_id,slot_questions):
 
     # print("updating utter question and options")
     
-    return slot_txt, slot_options, slot_rule
+    return slot_txt, slot_options, slot_rule,slot_validation
 
 
 
@@ -115,6 +130,11 @@ def get_hidden_question_ids(rules):
                             hidden_ids.append(entity.replace("formsReducer.", ""))
     
     return hidden_ids
+
+def check_validation(validations):
+    print("validations are: ",validations)
+    return True
+
 
 # def get_hidden_question_ids(rules):
 #     hidden_ids = []
