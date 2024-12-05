@@ -553,21 +553,27 @@ async def test_email(request):
 
 
 
-# Add a middleware to handle CORS for all routes
-@app.middleware
-async def add_cors_headers(request, response):
-    response.headers.update({
-        "Access-Control-Allow-Origin": "*",  # Allow all origins, replace '*' with specific domain for stricter rules
-        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",  # List allowed methods
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",  # List allowed headers
-    })
-    return response
+# # Add a middleware to handle CORS for all routes
+# @app.middleware
+# async def add_cors_headers(request, response):
+#     response.headers.update({
+#         "Access-Control-Allow-Origin": "*",  # Allow all origins, replace '*' with specific domain for stricter rules
+#         "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",  # List allowed methods
+#         "Access-Control-Allow-Headers": "Content-Type, Authorization",  # List allowed headers
+#     })
+#     return response
 
 
-# @app.route("/", method="OPTIONS")
-# async def options_handler(request):
-#     return Response(status_code=204) 
+@app.options("/survey_response")
+async def options_handler(request):
+    headers = {
+        "Access-Control-Allow-Origin": "*",  # Allow all origins
+        "Access-Control-Allow-Methods": "POST, OPTIONS",  # Allowed HTTP methods
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",  # Allowed headers
+    }
 
+    # Respond with status 204 (No Content) and appropriate headers
+    return Response(status_code=204, headers=headers,description="")
 
 
 
