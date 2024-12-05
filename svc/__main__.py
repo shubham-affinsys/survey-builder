@@ -551,7 +551,11 @@ async def test_email(request):
     
     return response
 
-ALLOW_CORS(app, origins = ["http://localhost:5500"])
+
+
+
+
+ALLOW_CORS(app, origins = ["*"])
 if __name__ == "__main__":
     # app.startup_handler(connect_db)
     # app.startup_handler(connect_db)
